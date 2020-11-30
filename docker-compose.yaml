@@ -5,9 +5,9 @@ services:
     app:
         build: .
         container_name: micro-videos-app
-        entrypoint: dockerize -template ./.docker/app/.env:.env -wait tcp://db:3306 -timeout 40s ./.docker/entrypoint.sh
+        entrypoint: dockerize -template ./.docker/app/.env:.env -wait tcp://db-micro:3306 -timeout 40s ./.docker/entrypoint.sh
         environment:
-            - _DB_HOST=db
+            - _DB_HOST=db-micro
             - _DB_DATABASE=code_micro_videos
             - _DB_USERNAME=root
             - _DB_PASSWORD=root
@@ -16,7 +16,7 @@ services:
         networks:
             - app-network
         depends_on:
-            - db
+            - db-micro
             - redis
 
     nginx:
@@ -33,7 +33,7 @@ services:
         depends_on:
             - app
 
-    db:
+    db-micro:
         build: ./.docker/mysql
         container_name: micro-videos-db
         restart: always
