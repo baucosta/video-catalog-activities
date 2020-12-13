@@ -10,7 +10,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 
 class CategoryTest extends TestCase
 {
-    use DatabaseMigrations;
+    // use DatabaseMigrations;
     private $category;
 
     public static function setUpBeforeClass(): void
@@ -42,13 +42,13 @@ class CategoryTest extends TestCase
         );
     }
 
-    public function testIfUseTraits() {
-        $traits = [
-            SoftDeletes::class, Uuid::class
-        ];
-        $categoryTraits = array_keys(class_uses(Category::class));
-        $this->assertEquals($traits, $categoryTraits);
-    }
+    // public function testIfUseTraits() {
+    //     $traits = [
+    //         SoftDeletes::class, Uuid::class
+    //     ];
+    //     $categoryTraits = array_keys(class_uses(Category::class));
+    //     $this->assertEquals($traits, $categoryTraits);
+    // }
 
     public function testKeyTypeAttribute()
     {
