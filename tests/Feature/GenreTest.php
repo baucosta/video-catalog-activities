@@ -33,6 +33,7 @@ class GenreTest extends TestCase
 
         $this->assertEquals('firstgenretest', $genre->name);
         $this->assertTrue((bool)$genre->is_active);
+        // $this->assertEquals(36, strlen($genre->id));
         $this->assertTrue((bool)Uuid::isValid($genre->id));
 
         $genre = Genre::create([
@@ -54,7 +55,7 @@ class GenreTest extends TestCase
         $genre = factory(Genre::class)->create([
             'name' => 'firstgenretest',
             'is_active' => false
-        ])->first();
+        ]);
 
         $data = [
             'name' => 'first genre update',
@@ -72,7 +73,7 @@ class GenreTest extends TestCase
         $genre = factory(Genre::class)->create([
             'name' => 'firstgenretest',
             'is_active' => false
-        ])->first();
+        ]);
 
         $this->assertTrue($genre->delete());
 

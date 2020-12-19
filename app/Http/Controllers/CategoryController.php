@@ -23,7 +23,9 @@ class CategoryController extends Controller
         $this->validate($request, $this->rules);
 
         // no Models/Category eu defino quais campos podem ser salvos pelo atributo $fillable
-        return Category::create($request->all());
+        $category = Category::create($request->all());
+        $category->refresh();
+        return $category;
     }
 
     public function show(Category $category)
