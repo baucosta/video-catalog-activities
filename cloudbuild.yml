@@ -1,5 +1,5 @@
 steps:
-    - id: "Performing docker-compose"
+    - id: "Performing  docker-compose"
       name: 'docker/compose'
       args: ["-f", "docker-compose.prod.yml", "up", "-d"]
 
