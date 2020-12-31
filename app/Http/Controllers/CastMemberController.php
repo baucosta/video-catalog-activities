@@ -3,43 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\CastMember;
-use Illuminate\Http\Request;
 
-class CastMemberController extends Controller
+class CastMemberController extends BasicCrudController
 {
-    private $rules = [
-        'name' => 'required|max:255'
-    ];
+    private $rules;
 
-    public function index()
-    {
-        return CastMember::all();
+    public function __construct() {
+        $this->rules = [
+            'name' => 'required|max:255',
+            'type' => 'required|in:'. implode(',', [CastMember::TYPE_DIRECTOR, CastMember::TYPE_ACTOR])
+        ];
     }
 
-    public function store(Request $request)
-    {
-        $this->validate($request, $this->rules);
-
-        $castMember =  CastMember::create($request->all());
-        $castMember->refresh();
-        return $castMember;
+    protected function model() {
+        return CastMember::class;
     }
 
-    public function show(CastMember $castMember)
+    protected function rulesStore()
     {
-        return $castMember;
+        return $this->rules;
     }
 
-    public function update(Request $request, CastMember $castMember)
+    protected function rulesUpdate()
     {
-        $this->validate($request, $this->rules);
-        $castMember->update($request->all());
-        return $castMember;
-    }
-
-    public function destroy(CastMember $castMember)
-    {
-        $castMember->delete();
-        return response()->noContent();
+        return $this->rules;
     }
 }
