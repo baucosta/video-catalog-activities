@@ -41,7 +41,7 @@ trait TestValidations {
     ) {
         $response
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['name']);
+            ->assertJsonValidationErrors($fields);
 
         foreach($fields as $field) {
             $fieldName = str_replace('_', ' ', $field);
