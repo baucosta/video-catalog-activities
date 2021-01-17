@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\GenreController;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use App\Models\Genre;
+use App\Models\Category;
 use Tests\Traits\TestSaves;
 use Tests\Traits\TestValidations;
 
@@ -39,7 +41,8 @@ class GenreControllerTest extends TestCase
 
     public function testInValidationData() {
         $data = [
-            'name' => ''
+            'name' => '',
+            'categories_id' => ''
         ];
         $this->assertInvalidationInStoreAction($data, 'required');
         $this->assertInvalidationInUpdateAction($data, 'required');
@@ -56,41 +59,81 @@ class GenreControllerTest extends TestCase
         $this->assertInvalidationInStoreAction($data, 'boolean');
         $this->assertInvalidationInUpdateAction($data, 'boolean');
 
+        $data = [
+            'categories_id' => 'a'
+        ];
+        $this->assertInvalidationInStoreAction($data, 'array');
+        $this->assertInvalidationInUpdateAction($data, 'array');
+
+        $data = [
+            'categories_id' => [100]
+        ];
+        $this->assertInvalidationInStoreAction($data, 'exists');
+        $this->assertInvalidationInUpdateAction($data, 'exists');
+
+        $category = factory(Category::class)->create();
+        $category->delete();
+        $data = [
+            'categories_id' => [$category->id]
+        ];
+        $this->assertInvalidationInStoreAction($data, 'exists');
+        $this->assertInvalidationInUpdateAction($data, 'exists');
     }
 
     public function testStore() {
+        $categoryID = factory(Category::class)->create()->id;
         $data = [
             'name' => 'test'
         ];
 
         $response = $this->assertStore(
-            $data,
+            $data + ['categories_id' => [$categoryID]],
             $data + ['is_active' => true, 'deleted_at' => null]
         );
         $response->assertJsonStructure([
             'created_at', 'updated_at'
         ]);
 
+        $this->assertHasRelationshipRegister(
+            'category_genre',
+            [
+                'genre_id' => $response->json('id'),
+                'category_id' => $categoryID
+            ]
+        );
+
         $data = [
             'name' => 'test',
             'is_active' => false
         ];
         $this->assertStore(
-            $data,
+            $data + ['categories_id' => [$categoryID]],
             $data + ['is_active' => false, 'deleted_at' => null]
         );
     }
 
     public function testUpdate() {
+        $categoryID = factory(Category::class)->create()->id;
         $data = [
             'name' => 'test',
             'is_active' => true
         ];
 
-        $response = $this->assertUpdate($data, $data + ['deleted_at' => null]);
+        $response = $this->assertUpdate(
+            $data + ['categories_id' => [$categoryID]],
+            $data + ['deleted_at' => null]
+        );
         $response->assertJsonStructure([
             'created_at', 'updated_at'
         ]);
+
+        $this->assertHasRelationshipRegister(
+            'category_genre',
+            [
+                'genre_id' => $response->json('id'),
+                'category_id' => $categoryID
+            ]
+        );
     }
 
     public function testDelete() {
@@ -106,6 +149,14 @@ class GenreControllerTest extends TestCase
         // $this->assertNotNull(Genre::withoutTrashed()->find($this->genre->id));
     }
 
+    public function testRollbackStore() {
+        $this->assertRollbackStore(['name' => 'test']);
+    }
+
+    public function testRollbackUpdate() {
+        $this->assertRollbackUpdate(['name' => 'test'], $this->genre);
+    }
+
     protected function routeStore() {
         return route('genres.store');
     }
@@ -116,5 +167,9 @@ class GenreControllerTest extends TestCase
 
     protected function model() {
         return Genre::class;
+    }
+
+    protected function controller() {
+        return GenreController::class;
     }
 }

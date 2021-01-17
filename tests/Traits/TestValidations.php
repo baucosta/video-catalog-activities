@@ -51,6 +51,10 @@ trait TestValidations {
         }
 
     }
+
+    protected function assertHasRelationshipRegister($table, array $keyValue) {
+        $this->assertDatabaseHas($table, $keyValue);
+    }
 }
 
 ?>

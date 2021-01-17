@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\CategoryController;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use App\Models\Category;
@@ -142,5 +143,9 @@ class CategoryControllerTest extends TestCase
 
     protected function model() {
         return Category::class;
+    }
+
+    protected function controller() {
+        return CategoryController::class;
     }
 }

@@ -8,8 +8,6 @@ use App\Models\Genre;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use App\Models\Video;
-use Illuminate\Http\Request;
-use Tests\Exceptions\TestException;
 use Tests\Traits\TestSaves;
 use Tests\Traits\TestValidations;
 
@@ -35,29 +33,11 @@ class VideoControllerTest extends TestCase
     }
 
     public function testRollbackStore() {
-        $controller = \Mockery::mock(VideoController::class)
-            ->makePartial()
-            ->shouldAllowMockingProtectedMethods();
+        $this->assertRollbackStore($this->sendData);
+    }
 
-        $controller->shouldReceive('validate')
-            ->withAnyArgs()
-            ->andReturn($this->sendData);
-
-        $controller->shouldReceive('rulesStore')
-            ->withAnyArgs()
-            ->andReturn([]);
-
-        $request = \Mockery::mock(Request::class);
-
-        $controller->shouldReceive('handleRelations')
-            ->once()
-            ->andThrow(new TestException());
-
-        try{
-            $controller->store($request);
-        } catch(TestException $exception) {
-            $this->assertCount(1, Video::all());
-        }
+    public function testRollbackUpdate() {
+        $this->assertRollbackUpdate(['name' => 'test'], $this->video);
     }
 
 
@@ -145,6 +125,14 @@ class VideoControllerTest extends TestCase
         ];
         $this->assertInvalidationInStoreAction($data, 'exists');
         $this->assertInvalidationInUpdateAction($data, 'exists');
+
+        $category = factory(Category::class)->create();
+        $category->delete();
+        $data = [
+            'categories_id' => [$category->id]
+        ];
+        $this->assertInvalidationInStoreAction($data, 'exists');
+        $this->assertInvalidationInUpdateAction($data, 'exists');
     }
 
     public function testInvalidationGenresIdField() {
@@ -159,11 +147,20 @@ class VideoControllerTest extends TestCase
         ];
         $this->assertInvalidationInStoreAction($data, 'exists');
         $this->assertInvalidationInUpdateAction($data, 'exists');
+
+        $genre = factory(Genre::class)->create();
+        $genre->delete();
+        $data = [
+            'genres_id' => [$genre->id]
+        ];
+        $this->assertInvalidationInStoreAction($data, 'exists');
+        $this->assertInvalidationInUpdateAction($data, 'exists');
     }
 
     public function testSave() {
         $category = factory(Category::class)->create();
         $genres = factory(Genre::class)->create();
+        $genres->categories()->sync($category->id);
 
         $data = [
             [
@@ -200,6 +197,22 @@ class VideoControllerTest extends TestCase
                 'created_at', 'updated_at'
             ]);
 
+            $this->assertHasRelationshipRegister(
+                'category_video',
+                [
+                    'video_id' => $response->json('id'),
+                    'category_id' => $value['send_data']['categories_id'][0]
+                ]
+            );
+
+            $this->assertHasRelationshipRegister(
+                'genre_video',
+                [
+                    'video_id' => $response->json('id'),
+                    'genre_id' => $value['send_data']['genres_id'][0]
+                ]
+            );
+
             $response = $this->assertUpdate(
                 $value['send_data'],
                 $value['test_data'] + ['deleted_at' => null]
@@ -207,6 +220,22 @@ class VideoControllerTest extends TestCase
             $response->assertJsonStructure([
                 'created_at', 'updated_at'
             ]);
+
+            $this->assertHasRelationshipRegister(
+                'category_video',
+                [
+                    'video_id' => $response->json('id'),
+                    'category_id' => $value['send_data']['categories_id'][0]
+                ]
+            );
+
+            $this->assertHasRelationshipRegister(
+                'genre_video',
+                [
+                    'video_id' => $response->json('id'),
+                    'genre_id' => $value['send_data']['genres_id'][0]
+                ]
+            );
         }
     }
 
@@ -232,5 +261,9 @@ class VideoControllerTest extends TestCase
 
     protected function model() {
         return Video::class;
+    }
+
+    protected function controller() {
+        return VideoController::class;
     }
 }
