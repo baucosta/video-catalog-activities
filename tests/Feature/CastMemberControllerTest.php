@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\CastMemberController;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use App\Models\CastMember;
@@ -122,5 +123,9 @@ class CastMemberControllerTest extends TestCase
 
     protected function model() {
         return CastMember::class;
+    }
+
+    protected function controller() {
+        return CastMemberController::class;
     }
 }
