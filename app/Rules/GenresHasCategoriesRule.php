@@ -7,7 +7,7 @@ namespace App\Rules;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Collection;
 
-class GenresHasCategories implements Rule
+class GenresHasCategoriesRule implements Rule
 {
     /**
      * Create a new rule instance.
@@ -31,6 +31,9 @@ class GenresHasCategories implements Rule
      */
     public function passes($attribute, $value)
     {
+        if (!is_array($value)) {
+            $value = [];
+        }
         $this->genresID = array_unique($value);
         if(!count($this->genresID) || !count($this->categoriesID)) {
             return false;
@@ -44,6 +47,7 @@ class GenresHasCategories implements Rule
             }
             array_push($categoriesFound, ...$rows->pluck('category_id')->toArray());
         }
+        $categoriesFound = array_unique($categoriesFound);
         if(count($categoriesFound) !== count($this->categoriesID)) {
             return false;
         }
@@ -65,6 +69,7 @@ class GenresHasCategories implements Rule
      */
     public function message()
     {
-        return 'A genre ID must be related at least to category ID.';
+        // return 'A genre ID must be related at least to category ID.';
+        return trans('validation.genres_has_categories');
     }
 }

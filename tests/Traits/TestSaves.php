@@ -71,11 +71,15 @@ trait TestSaves {
             ->withAnyArgs()
             ->andReturn([]);
 
-        $request = \Mockery::mock(Request::class);
-
         $controller->shouldReceive('handleRelations')
             ->once()
             ->andThrow(new TestException());
+
+        $request = \Mockery::mock(Request::class);
+        $request->shouldReceive('get')
+            ->withAnyArgs()
+            ->andReturnNull();
+
 
         $hasError = false;
         try{
@@ -105,11 +109,14 @@ trait TestSaves {
             ->withAnyArgs()
             ->andReturn([]);
 
-        $request = \Mockery::mock(Request::class);
-
         $controller->shouldReceive('handleRelations')
             ->once()
             ->andThrow(new TestException());
+
+        $request = \Mockery::mock(Request::class);
+            $request->shouldReceive('get')
+                ->withAnyArgs()
+                ->andReturnNull();
 
         $hasError = false;
         try{
