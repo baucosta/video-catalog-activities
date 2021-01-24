@@ -58,76 +58,76 @@ trait TestSaves {
         $response->assertJsonFragment($testResponse + ['id' => $response->json('id')]);
     }
 
-    protected function assertRollbackStore(array $sendData) {
-        $controller = \Mockery::mock($this->controller())
-            ->makePartial()
-            ->shouldAllowMockingProtectedMethods();
+    // protected function assertRollbackStore(array $sendData) {
+    //     $controller = \Mockery::mock($this->controller())
+    //         ->makePartial()
+    //         ->shouldAllowMockingProtectedMethods();
 
-        $controller->shouldReceive('validate')
-            ->withAnyArgs()
-            ->andReturn($sendData);
+    //     $controller->shouldReceive('validate')
+    //         ->withAnyArgs()
+    //         ->andReturn($sendData);
 
-        $controller->shouldReceive('rulesStore')
-            ->withAnyArgs()
-            ->andReturn([]);
+    //     $controller->shouldReceive('rulesStore')
+    //         ->withAnyArgs()
+    //         ->andReturn([]);
 
-        $controller->shouldReceive('handleRelations')
-            ->once()
-            ->andThrow(new TestException());
+    //     $controller->shouldReceive('handleRelations')
+    //         ->once()
+    //         ->andThrow(new TestException());
 
-        $request = \Mockery::mock(Request::class);
-        $request->shouldReceive('get')
-            ->withAnyArgs()
-            ->andReturnNull();
+    //     $request = \Mockery::mock(Request::class);
+    //     $request->shouldReceive('get')
+    //         ->withAnyArgs()
+    //         ->andReturnNull();
 
 
-        $hasError = false;
-        try{
-            $controller->store($request);
-        } catch(TestException $exception) {
-            $this->assertCount(1, $this->model()::all());
-            $hasError = true;
-        }
+    //     $hasError = false;
+    //     try{
+    //         $controller->store($request);
+    //     } catch(TestException $exception) {
+    //         $this->assertCount(1, $this->model()::all());
+    //         $hasError = true;
+    //     }
 
-        $this->assertTrue($hasError);
-    }
+    //     $this->assertTrue($hasError);
+    // }
 
-    protected function assertRollbackUpdate(array $sendData, $failData) {
-        $controller = \Mockery::mock($this->controller())
-            ->makePartial()
-            ->shouldAllowMockingProtectedMethods();
+    // protected function assertRollbackUpdate(array $sendData, $failData) {
+    //     $controller = \Mockery::mock($this->controller())
+    //         ->makePartial()
+    //         ->shouldAllowMockingProtectedMethods();
 
-        $controller->shouldReceive('findOrFail')
-            ->withAnyArgs()
-            ->andReturn($failData);
+    //     $controller->shouldReceive('findOrFail')
+    //         ->withAnyArgs()
+    //         ->andReturn($failData);
 
-        $controller->shouldReceive('validate')
-            ->withAnyArgs()
-            ->andReturn($sendData);
+    //     $controller->shouldReceive('validate')
+    //         ->withAnyArgs()
+    //         ->andReturn($sendData);
 
-        $controller->shouldReceive('rulesUpdate')
-            ->withAnyArgs()
-            ->andReturn([]);
+    //     $controller->shouldReceive('rulesUpdate')
+    //         ->withAnyArgs()
+    //         ->andReturn([]);
 
-        $controller->shouldReceive('handleRelations')
-            ->once()
-            ->andThrow(new TestException());
+    //     $controller->shouldReceive('handleRelations')
+    //         ->once()
+    //         ->andThrow(new TestException());
 
-        $request = \Mockery::mock(Request::class);
-            $request->shouldReceive('get')
-                ->withAnyArgs()
-                ->andReturnNull();
+    //     $request = \Mockery::mock(Request::class);
+    //         $request->shouldReceive('get')
+    //             ->withAnyArgs()
+    //             ->andReturnNull();
 
-        $hasError = false;
-        try{
-            $controller->update($request, 1);
-        } catch(TestException $exception) {
-            $this->assertCount(1, $this->model()::all());
-            $hasError = true;
-        }
+    //     $hasError = false;
+    //     try{
+    //         $controller->update($request, 1);
+    //     } catch(TestException $exception) {
+    //         $this->assertCount(1, $this->model()::all());
+    //         $hasError = true;
+    //     }
 
-        $this->assertTrue($hasError);
-    }
+    //     $this->assertTrue($hasError);
+    // }
 }
 
 ?>

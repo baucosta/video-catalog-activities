@@ -32,13 +32,13 @@ class VideoControllerTest extends TestCase
         ];
     }
 
-    public function testRollbackStore() {
-        $this->assertRollbackStore($this->sendData);
-    }
+    // public function testRollbackStore() {
+    //     $this->assertRollbackStore($this->sendData);
+    // }
 
-    public function testRollbackUpdate() {
-        $this->assertRollbackUpdate(['name' => 'test'], $this->video);
-    }
+    // public function testRollbackUpdate() {
+    //     $this->assertRollbackUpdate(['name' => 'test'], $this->video);
+    // }
 
 
     public function testIndex()
