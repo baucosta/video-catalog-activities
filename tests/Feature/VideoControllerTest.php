@@ -239,115 +239,115 @@ class VideoControllerTest extends TestCase
         }
     }
 
-    public function testSyncCategories() {
-        $categoriesID = factory(Category::class, 3)->create()->pluck('id')->toArray();
-        $genre = factory(Genre::class)->create();
-        $genre->categories()->sync($categoriesID);
-        $genreID = $genre->id;
+    // public function testSyncCategories() {
+    //     $categoriesID = factory(Category::class, 3)->create()->pluck('id')->toArray();
+    //     $genre = factory(Genre::class)->create();
+    //     $genre->categories()->sync($categoriesID);
+    //     $genreID = $genre->id;
 
-        $response = $this->json(
-            'POST',
-            $this->routeStore(),
-            $this->sendData + [
-                'genres_id' => [$genreID],
-                'categories_id' => [$categoriesID[0]]
-            ]
-        );
+    //     $response = $this->json(
+    //         'POST',
+    //         $this->routeStore(),
+    //         $this->sendData + [
+    //             'genres_id' => [$genreID],
+    //             'categories_id' => [$categoriesID[0]]
+    //         ]
+    //     );
 
-        $this->assertHasRelationshipRegister(
-            'category_video',
-            [
-                'video_id' => $response->json('id'),
-                'category_id' => $categoriesID[0]
-            ]
-        );
+    //     $this->assertHasRelationshipRegister(
+    //         'category_video',
+    //         [
+    //             'video_id' => $response->json('id'),
+    //             'category_id' => $categoriesID[0]
+    //         ]
+    //     );
 
-        $response = $this->json(
-            'PUT',
-            route('videos.update', ['video' => $response->json('id')]),
-            $this->sendData + [
-                'genres_id' => [$genreID],
-                'categories_id' => [$categoriesID[1],$categoriesID[2]]
-            ]
-        );
+    //     $response = $this->json(
+    //         'PUT',
+    //         route('videos.update', ['video' => $response->json('id')]),
+    //         $this->sendData + [
+    //             'genres_id' => [$genreID],
+    //             'categories_id' => [$categoriesID[1],$categoriesID[2]]
+    //         ]
+    //     );
 
-        $this->assertDatabaseMissing('category_video', [
-            'category_id' => $categoriesID[0],
-            'video_id' => $response->json('id')
-        ]);
+    //     $this->assertDatabaseMissing('category_video', [
+    //         'category_id' => $categoriesID[0],
+    //         'video_id' => $response->json('id')
+    //     ]);
 
-        $this->assertHasRelationshipRegister(
-            'category_video',
-            [
-                'video_id' => $response->json('id'),
-                'category_id' => $categoriesID[1]
-            ]
-        );
+    //     $this->assertHasRelationshipRegister(
+    //         'category_video',
+    //         [
+    //             'video_id' => $response->json('id'),
+    //             'category_id' => $categoriesID[1]
+    //         ]
+    //     );
 
-        $this->assertHasRelationshipRegister(
-            'category_video',
-            [
-                'video_id' => $response->json('id'),
-                'category_id' => $categoriesID[2]
-            ]
-        );
-    }
+    //     $this->assertHasRelationshipRegister(
+    //         'category_video',
+    //         [
+    //             'video_id' => $response->json('id'),
+    //             'category_id' => $categoriesID[2]
+    //         ]
+    //     );
+    // }
 
-    public function testSyncGenres() {
-        $genres = factory(Genre::class, 3)->create();
-        $genreID = $genres->pluck('id')->toArray();
-        $categoryID = factory(Category::class)->create()->id;
-        $genres->each(function($genre) use ($categoryID) {
-            $genre->categories()->sync($categoryID);
-        });
+    // public function testSyncGenres() {
+    //     $genres = factory(Genre::class, 3)->create();
+    //     $genreID = $genres->pluck('id')->toArray();
+    //     $categoryID = factory(Category::class)->create()->id;
+    //     $genres->each(function($genre) use ($categoryID) {
+    //         $genre->categories()->sync($categoryID);
+    //     });
 
-        $response = $this->json(
-            'POST',
-            $this->routeStore(),
-            $this->sendData + [
-                'genres_id' => [$genreID[0]],
-                'categories_id' => [$categoryID]
-            ]
-        );
+    //     $response = $this->json(
+    //         'POST',
+    //         $this->routeStore(),
+    //         $this->sendData + [
+    //             'genres_id' => [$genreID[0]],
+    //             'categories_id' => [$categoryID]
+    //         ]
+    //     );
 
-        $this->assertHasRelationshipRegister(
-            'genre_video',
-            [
-                'video_id' => $response->json('id'),
-                'genre_id' => $genreID[0]
-            ]
-        );
+    //     $this->assertHasRelationshipRegister(
+    //         'genre_video',
+    //         [
+    //             'video_id' => $response->json('id'),
+    //             'genre_id' => $genreID[0]
+    //         ]
+    //     );
 
-        $response = $this->json(
-            'PUT',
-            route('videos.update', ['video' => $response->json('id')]),
-            $this->sendData + [
-                'genres_id' =>[$genreID[1],$genreID[2]],
-                'categories_id' => [$categoryID]
-            ]
-        );
+    //     $response = $this->json(
+    //         'PUT',
+    //         route('videos.update', ['video' => $response->json('id')]),
+    //         $this->sendData + [
+    //             'genres_id' =>[$genreID[1],$genreID[2]],
+    //             'categories_id' => [$categoryID]
+    //         ]
+    //     );
 
-        $this->assertDatabaseMissing('genre_video', [
-            'genre_id' => $genreID[0],
-            'video_id' => $response->json('id')
-        ]);
+    //     $this->assertDatabaseMissing('genre_video', [
+    //         'genre_id' => $genreID[0],
+    //         'video_id' => $response->json('id')
+    //     ]);
 
-        $this->assertHasRelationshipRegister(
-            'genre_video',
-            [
-                'video_id' => $response->json('id'),
-                'genre_id' => $genreID[1]
-            ]
-        );
+    //     $this->assertHasRelationshipRegister(
+    //         'genre_video',
+    //         [
+    //             'video_id' => $response->json('id'),
+    //             'genre_id' => $genreID[1]
+    //         ]
+    //     );
 
-        $this->assertHasRelationshipRegister(
-            'genre_video',
-            [
-                'video_id' => $response->json('id'),
-                'genre_id' => $genreID[2]
-            ]
-        );
-    }
+    //     $this->assertHasRelationshipRegister(
+    //         'genre_video',
+    //         [
+    //             'video_id' => $response->json('id'),
+    //             'genre_id' => $genreID[2]
+    //         ]
+    //     );
+    // }
 
     public function testDelete() {
         $response = $this->json(
