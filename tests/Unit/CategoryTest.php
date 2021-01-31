@@ -4,9 +4,9 @@ namespace Tests\Unit;
 
 use App\Models\Category;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use PHPUnit\Framework\TestCase;
 use \App\Models\Traits\Uuid;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Tests\TestCase;
 
 class CategoryTest extends TestCase
 {
