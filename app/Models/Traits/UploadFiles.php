@@ -18,7 +18,9 @@ trait UploadFiles {
     }
 
     public function uploadFile(UploadedFile $file) {
-        $file->store($this->uploadDir());
+        if ($file->getMimeType() == 'video/mp4' && $file->getSize() <= 10485760) {
+            $file->store($this->uploadDir());
+        }
     }
 
     public function deleteFiles(array $files) {
