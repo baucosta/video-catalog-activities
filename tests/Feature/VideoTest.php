@@ -28,7 +28,7 @@ class VideoTest extends TestCase
             'description' => 'description',
             'year_launched' => 2010,
             'rating' => Video::RATING_LIST[0],
-            'duration' => 90
+            'duration' => 90,
         ];
     }
 
