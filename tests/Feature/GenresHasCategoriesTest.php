@@ -6,8 +6,6 @@ use App\Models\Category;
 use App\Models\Genre;
 use App\Rules\GenresHasCategoriesRule;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class GenresHasCategoriesTest extends TestCase

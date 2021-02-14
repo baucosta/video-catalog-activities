@@ -1,7 +1,26 @@
 steps:
+    - id: "Generating service-account-storage.json"
+      name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+      entrypoint: gcloud
+      args:
+        - kms
+        - decrypt
+        - --ciphertext-file=./storage/credentials/google/service-account-storage.json.enc
+        - --plaintext-file=./storage/credentials/google/service-account-storage.json
+        - --location=global
+        - --keyring=test-lesson
+        - --key=service-account
+
     - id: "Performing  docker-compose"
       name: 'docker/compose'
       args: ["-f", "docker-compose.prod.yml", "up", "-d"]
+      env:
+        - GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID
+        - GOOGLE_CLOUD_KEY_FILE=service-account-storage.json
+        - GOOGLE_CLOUD_STORAGE_BUCKET=micro-video-codeflix
+        - GOOGLE_CLOUD_STORAGE_API_URI=https://storage.cloud.google.com/code-education-activities
+        - TESTING_PROD=true
+
 
     - id: "Chown in /var/www"
       name: 'docker'

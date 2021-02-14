@@ -3,25 +3,14 @@
 namespace Tests\Unit;
 
 use App\Rules\GenresHasCategoriesRule;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Mockery\MockInterface;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 class GenresHasCategoriesTest extends TestCase
 {
-    /**
-     * A basic unit test example.
-     *
-     * @return void
-     */
-    public function testCategoriesField() {
-        $rule = new GenresHasCategoriesRule([1, 1, 2, 2]);
-        $refectionClass = new \ReflectionClass(GenresHasCategoriesRule::class);
-        $reflectionProperty = $refectionClass->getProperty('categoriesID');
-        $reflectionProperty->setAccessible(true);
+    use DatabaseMigrations;
 
-        $categoriesID = $reflectionProperty->getValue($rule);
-        $this->assertEqualsCanonicalizing([1, 2], $categoriesID);
-    }
 
     public function testGenresIdValue() {
         $rule = $this->createRuleMock([]);
@@ -37,6 +26,16 @@ class GenresHasCategoriesTest extends TestCase
 
         $genresID = $reflectionProperty->getValue($rule);
         $this->assertEqualsCanonicalizing([1, 2], $genresID);
+    }
+
+    public function testCategoriesField() {
+        $rule = new GenresHasCategoriesRule([1, 1, 2, 2]);
+        $refectionClass = new \ReflectionClass(GenresHasCategoriesRule::class);
+        $reflectionProperty = $refectionClass->getProperty('categoriesID');
+        $reflectionProperty->setAccessible(true);
+
+        $categoriesID = $reflectionProperty->getValue($rule);
+        $this->assertEqualsCanonicalizing([1, 2], $categoriesID);
     }
 
     public function testPassesReturnsFalseWhenCategoriesOrGenresIsArrayEmpty() {

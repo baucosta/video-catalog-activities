@@ -196,13 +196,13 @@ class GenreControllerTest extends TestCase
         // $this->assertNotNull(Genre::withoutTrashed()->find($this->genre->id));
     }
 
-    public function testRollbackStore() {
-        $this->assertRollbackStore(['name' => 'test']);
-    }
+    // public function testRollbackStore() {
+    //     $this->assertRollbackStore(['name' => 'test']);
+    // }
 
-    public function testRollbackUpdate() {
-        $this->assertRollbackUpdate(['name' => 'test'], $this->genre);
-    }
+    // public function testRollbackUpdate() {
+    //     $this->assertRollbackUpdate(['name' => 'test'], $this->genre);
+    // }
 
     protected function routeStore() {
         return route('genres.store');
