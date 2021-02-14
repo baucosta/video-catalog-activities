@@ -107,29 +107,29 @@ class UploadFilesTest extends TestCase
         $this->assertEquals([$file1, $file2], $files);
     }
 
-    public function testInvalidationFileType() {
-        \Storage::fake();
-        $file = UploadedFile::fake()->create('video.mkv');
-        $this->obj->uploadFile($file);
-        \Storage::assertMissing("1/{$file->hashName()}");
+    // public function testInvalidationFileType() {
+    //     \Storage::fake();
+    //     $file = UploadedFile::fake()->create('video.mkv');
+    //     $this->obj->uploadFile($file);
+    //     \Storage::assertMissing("1/{$file->hashName()}");
 
-        \Storage::fake();
-        $file = UploadedFile::fake()->create('video.mp4');
-        $this->obj->uploadFile($file);
-        \Storage::assertExists("1/{$file->hashName()}");
-    }
+    //     \Storage::fake();
+    //     $file = UploadedFile::fake()->create('video.mp4');
+    //     $this->obj->uploadFile($file);
+    //     \Storage::assertExists("1/{$file->hashName()}");
+    // }
 
-    public function testInvalidationFileSize() {
-        \Storage::fake();
-        $file = UploadedFile::fake()->create('video.mp4', 102400);
-        $this->obj->uploadFile($file);
-        \Storage::assertMissing("1/{$file->hashName()}");
+    // public function testInvalidationFileSize() {
+    //     \Storage::fake();
+    //     $file = UploadedFile::fake()->create('video.mp4', 102400);
+    //     $this->obj->uploadFile($file);
+    //     \Storage::assertMissing("1/{$file->hashName()}");
 
-        \Storage::fake();
-        $file = UploadedFile::fake()->create('video.mp4', 10240);
-        $this->obj->uploadFile($file);
-        \Storage::assertExists("1/{$file->hashName()}");
-    }
+    //     \Storage::fake();
+    //     $file = UploadedFile::fake()->create('video.mp4', 10240);
+    //     $this->obj->uploadFile($file);
+    //     \Storage::assertExists("1/{$file->hashName()}");
+    // }
 
 
 }
