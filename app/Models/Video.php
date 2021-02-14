@@ -21,12 +21,14 @@ class Video extends Model
         'rating',
         'duration',
         'video_file',
-        'thumb_file'
+        'thumb_file',
+        'banner_file',
+        'trailer_file'
     ];
     protected $dates = ['deleted_at'];
     public $incrementing = false;
     protected $keyType = 'string';
-    public static $fileFields = ['video_file', 'thumb_file'];
+    public static $fileFields = ['video_file', 'thumb_file', 'banner_file', 'trailer_file'];
 
     protected $casts = [
         'id' => 'string',
