@@ -1,6 +1,7 @@
 steps:
     - id: "Generating service-account-storage.json"
-      name: 'gcr.io/cloud-builders/gcloud'
+      name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+      entrypoint: gcloud
       args:
         - kms
         - decrypt
