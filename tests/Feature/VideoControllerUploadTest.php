@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Category;
+use App\Models\Genre;
 use Illuminate\Http\UploadedFile;
 use Tests\Traits\TestUploads;
 use Tests\Traits\TestValidations;

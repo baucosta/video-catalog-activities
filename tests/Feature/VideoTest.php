@@ -37,6 +37,7 @@ class VideoTest extends TestCase
         $videos = Video::all();
         $this->assertCount(1, $videos);
         $videoKeys = array_keys($videos->first()->getAttributes());
+
         $this->assertEqualsCanonicalizing([
               'id',
               'title',
@@ -45,6 +46,8 @@ class VideoTest extends TestCase
               'opened',
               'rating',
               'duration',
+              'video_file',
+              'thumb_file',
               'created_at',
               'updated_at',
               'deleted_at'
@@ -170,8 +173,8 @@ class VideoTest extends TestCase
         $video->refresh();
         $this->assertCount(1, $video->genres);
 
-        $video->categories()->delete();
-        $video->genres()->delete();
+        // $video->categories()->delete();
+        // $video->genres()->delete();
 
         Video::handleRelations($video, [
             'categories_id' => [$category->id],

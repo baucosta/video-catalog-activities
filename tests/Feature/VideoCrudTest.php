@@ -24,6 +24,7 @@ class VideoCrudTest extends BaseVideoTestCase {
         $videos = Video::all();
         $this->assertCount(1, $videos);
         $videoKeys = array_keys($videos->first()->getAttributes());
+
         $this->assertEqualsCanonicalizing([
               'id',
               'title',
@@ -33,6 +34,7 @@ class VideoCrudTest extends BaseVideoTestCase {
               'rating',
               'duration',
               'video_file',
+              'thumb_file',
               'created_at',
               'updated_at',
               'deleted_at'
@@ -158,8 +160,8 @@ class VideoCrudTest extends BaseVideoTestCase {
         $video->refresh();
         $this->assertCount(1, $video->genres);
 
-        $video->categories()->delete();
-        $video->genres()->delete();
+        // $video->categories()->delete();
+        // $video->genres()->delete();
 
         Video::handleRelations($video, [
             'categories_id' => [$category->id],

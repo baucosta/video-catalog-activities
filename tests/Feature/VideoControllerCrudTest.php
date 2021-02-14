@@ -6,7 +6,6 @@ use App\Models\Category;
 use App\Models\Genre;
 use App\Models\Video;
 use App\Http\Controllers\VideoController;
-use Illuminate\Http\UploadedFile;
 use Tests\Traits\TestSaves;
 use Tests\Traits\TestValidations;
 
@@ -287,7 +286,7 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase {
     }
 
     protected function assertHasGenre($videoID, $genreID) {
-        $this->assertDatabaseHas('category_video', [
+        $this->assertDatabaseHas('genre_video', [
             'video_id' => $videoID,
             'genre_id' => $genreID
         ]);

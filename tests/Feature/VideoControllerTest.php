@@ -327,7 +327,7 @@ class VideoControllerTest extends TestCase
     }
 
     protected function assertHasGenre($videoID, $genreID) {
-        $this->assertDatabaseHas('category_video', [
+        $this->assertDatabaseHas('genre_video', [
             'video_id' => $videoID,
             'genre_id' => $genreID
         ]);
