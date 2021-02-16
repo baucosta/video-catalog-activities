@@ -19,12 +19,16 @@ class Video extends Model
         'year_launched',
         'opened',
         'rating',
-        'duration'
+        'duration',
+        'video_file',
+        'thumb_file',
+        'banner_file',
+        'trailer_file'
     ];
     protected $dates = ['deleted_at'];
     public $incrementing = false;
     protected $keyType = 'string';
-    public static $fileFields = ['video_file'];
+    public static $fileFields = ['video_file', 'thumb_file', 'banner_file', 'trailer_file'];
 
     protected $casts = [
         'id' => 'string',
@@ -44,7 +48,7 @@ class Video extends Model
             return $obj;
         }catch(\Exception $e) {
             if (isset($obj)) {
-
+                $obj->deleteFiles($files);
             }
             \DB::rollback();
             throw $e;
@@ -54,17 +58,21 @@ class Video extends Model
 
     public function update(array $attributes = [], array $options = [])
     {
+        $files = self::extractFiles($attributes);
         try {
             \DB::beginTransaction();
             $saved = parent::update($attributes, $options);
             static::handleRelations($this, $attributes);
             if ($saved) {
-
+                $this->uploadFiles($files);
             }
             \DB::commit();
-
+            if ($saved && count($files)) {
+                $this->deleteOldFiles();
+            }
             return $saved;
         }catch(\Exception $e) {
+            $this->deleteFiles($files);
             \DB::rollback();
             throw $e;
 
