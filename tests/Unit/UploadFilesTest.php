@@ -107,6 +107,10 @@ class UploadFilesTest extends TestCase
         $this->assertEquals([$file1, $file2], $files);
     }
 
+    public function testRelativeFilePath() {
+        $this->assertEquals("1/video.mp4", $this->obj->relativeFilePath('video.mp4'));
+    }
+
     // public function testInvalidationFileType() {
     //     \Storage::fake();
     //     $file = UploadedFile::fake()->create('video.mkv');
