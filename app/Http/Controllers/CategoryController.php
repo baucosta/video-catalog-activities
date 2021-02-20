@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CategoryCollection;
+use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 
 class CategoryController extends BasicCrudController
@@ -12,6 +14,17 @@ class CategoryController extends BasicCrudController
         'description' => 'nullable',
         'is_active' => 'boolean'
     ];
+
+    public function show($id) {
+        $obj = parent::show($id);
+        return new CategoryResource($obj);
+    }
+
+    public function index() {
+        $collection = parent::index();
+        // return CategoryResource::collection($collection);
+        return new CategoryCollection($collection);
+    }
 
     protected function model() {
         return Category::class;
@@ -25,5 +38,10 @@ class CategoryController extends BasicCrudController
     protected function rulesUpdate()
     {
         return $this->rules;
+    }
+
+    protected function resource()
+    {
+        return CategoryResource::class;
     }
 }

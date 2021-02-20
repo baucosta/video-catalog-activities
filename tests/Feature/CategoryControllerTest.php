@@ -13,6 +13,15 @@ class CategoryControllerTest extends TestCase
 {
     use DatabaseMigrations, TestValidations, TestSaves;
     private $category;
+    private $serializedFields = [
+        'id',
+        'name',
+        'description',
+        'is_active',
+        'created_at',
+        'updated_at',
+        'deleted_at'
+    ];
 
     protected function setUp(): void
     {
@@ -69,7 +78,7 @@ class CategoryControllerTest extends TestCase
             $data + ['description' => null, 'is_active' => true, 'deleted_at' => null]
         );
         $response->assertJsonStructure([
-            'created_at', 'updated_at'
+            'data' => $this->serializedFields
         ]);
 
         $data = [
