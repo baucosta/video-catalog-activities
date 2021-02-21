@@ -3,17 +3,27 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\GenreController;
+use App\Http\Resources\GenreResource;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use App\Models\Genre;
 use App\Models\Category;
+use Tests\Traits\TestResources;
 use Tests\Traits\TestSaves;
 use Tests\Traits\TestValidations;
 
 class GenreControllerTest extends TestCase
 {
-    use DatabaseMigrations, TestValidations, TestSaves;
+    use DatabaseMigrations, TestValidations, TestSaves, TestResources;
     private $genre;
+    private $serializedFields = [
+        'id',
+        'name',
+        'is_active',
+        'created_at',
+        'updated_at',
+        'deleted_at'
+    ];
 
     protected function setUp(): void
     {
@@ -27,16 +37,29 @@ class GenreControllerTest extends TestCase
 
         $response
             ->assertStatus(200)
-            ->assertJson([$this->genre->toArray()]);
+            ->assertJson($this->assertQuantityPaginate)
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => $this->serializedFields
+                ],
+                'links' => [],
+                'meta' => []
+            ]);
+
+        $resource = $this->resource()::collection(collect([$this->genre]));
+        $this->assertResource($response, $resource);
     }
 
     public function testShow()
     {
         $response = $this->get(route('genres.show', ['genre' => $this->genre->id]));
-
         $response
             ->assertStatus(200)
-            ->assertJson($this->genre->toArray());
+            ->assertJsonStructure([
+                'data' => $this->serializedFields
+            ]);
+
+        $this->assertResourceForFind($response);
     }
 
     public function testInValidationData() {
@@ -91,7 +114,7 @@ class GenreControllerTest extends TestCase
             $data + ['is_active' => true, 'deleted_at' => null]
         );
         $response->assertJsonStructure([
-            'created_at', 'updated_at'
+            'data' => $this->serializedFields
         ]);
 
         $this->assertHasRelationshipRegister(
@@ -110,6 +133,8 @@ class GenreControllerTest extends TestCase
             $data + ['categories_id' => [$categoryID]],
             $data + ['is_active' => false, 'deleted_at' => null]
         );
+
+        $this->assertResourceForFind($response);
     }
 
     public function testUpdate() {
@@ -124,8 +149,10 @@ class GenreControllerTest extends TestCase
             $data + ['deleted_at' => null]
         );
         $response->assertJsonStructure([
-            'created_at', 'updated_at'
+            'data' => $this->serializedFields
         ]);
+
+        $this->assertResourceForFind($response);
 
         $this->assertHasRelationshipRegister(
             'category_genre',
@@ -218,5 +245,10 @@ class GenreControllerTest extends TestCase
 
     protected function controller() {
         return GenreController::class;
+    }
+
+    protected function resource()
+    {
+        return GenreResource::class;
     }
 }

@@ -40,17 +40,17 @@ abstract class BasicCrudController extends Controller
         return new $resource($obj);
     }
 
-    protected function findOrFail($id) {
-        $model = $this->model();
-        $keyName = (new $model)->getRouteKeyName();
-        return $this->model()::where($keyName, $id)->firstOrFail();
-    }
-
     public function show($id)
     {
         $obj = $this->findOrFail($id);
         $resource = $this->resource();
         return new $resource($obj);
+    }
+
+    protected function findOrFail($id) {
+        $model = $this->model();
+        $keyName = (new $model)->getRouteKeyName();
+        return $this->model()::where($keyName, $id)->firstOrFail();
     }
 
     public function update(Request $request, $id)

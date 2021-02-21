@@ -38,9 +38,7 @@ class CategoryControllerTest extends TestCase
 
         $response
             ->assertStatus(200)
-            ->assertJson([
-                'meta' => ['per_page' => 15]
-            ])
+            ->assertJson($this->assertQuantityPaginate)
             ->assertJsonStructure([
                 'data' => [
                     '*' => $this->serializedFields
@@ -50,7 +48,7 @@ class CategoryControllerTest extends TestCase
             ]);
 
 
-        $resource = CategoryResource::collection(collect([$this->category]));
+        $resource = $this->resource()::collection(collect([$this->category]));
         $this->assertResource($response, $resource);
     }
 
@@ -64,9 +62,7 @@ class CategoryControllerTest extends TestCase
                 'data' => $this->serializedFields
             ]);
 
-        $id = $response->json('data.id');
-        $resource = new CategoryResource(Category::find($id));
-        $this->assertResource($response, $resource);
+        $this->assertResourceForFind($response);
     }
 
     public function testInValidationData() {
@@ -112,9 +108,7 @@ class CategoryControllerTest extends TestCase
             $data + ['description' => 'some description', 'is_active' => false]
         );
 
-        $id = $response->json('data.id');
-        $resource = new CategoryResource(Category::find($id));
-        $this->assertResource($response, $resource);
+        $this->assertResourceForFind($response);
     }
 
     public function testUpdate() {
@@ -128,9 +122,8 @@ class CategoryControllerTest extends TestCase
         $response->assertJsonStructure([
             'data' => $this->serializedFields
         ]);
-        $id = $response->json('data.id');
-        $resource = new CategoryResource(Category::find($id));
-        $this->assertResource($response, $resource);
+
+        $this->assertResourceForFind($response);
 
         $data = [
             'name' => 'test',
@@ -179,5 +172,10 @@ class CategoryControllerTest extends TestCase
 
     protected function controller() {
         return CategoryController::class;
+    }
+
+    protected function resource()
+    {
+        return CategoryResource::class;
     }
 }
