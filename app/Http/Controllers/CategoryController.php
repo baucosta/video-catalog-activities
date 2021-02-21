@@ -15,17 +15,6 @@ class CategoryController extends BasicCrudController
         'is_active' => 'boolean'
     ];
 
-    public function show($id) {
-        $obj = parent::show($id);
-        return new CategoryResource($obj);
-    }
-
-    public function index() {
-        $collection = parent::index();
-        // return CategoryResource::collection($collection);
-        return new CategoryCollection($collection);
-    }
-
     protected function model() {
         return Category::class;
     }
@@ -38,6 +27,11 @@ class CategoryController extends BasicCrudController
     protected function rulesUpdate()
     {
         return $this->rules;
+    }
+
+    protected function resourceCollection()
+    {
+        return $this->resource();
     }
 
     protected function resource()
