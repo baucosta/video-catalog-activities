@@ -20,6 +20,7 @@ class GenreControllerTest extends TestCase
         'id',
         'name',
         'is_active',
+        'categories',
         'created_at',
         'updated_at',
         'deleted_at'
@@ -34,7 +35,6 @@ class GenreControllerTest extends TestCase
     public function testIndex()
     {
         $response = $this->get(route('genres.index'));
-
         $response
             ->assertStatus(200)
             ->assertJson($this->assertQuantityPaginate)
@@ -117,10 +117,11 @@ class GenreControllerTest extends TestCase
             'data' => $this->serializedFields
         ]);
 
+
         $this->assertHasRelationshipRegister(
             'category_genre',
             [
-                'genre_id' => $response->json('id'),
+                'genre_id' => $response->json('data.id'),
                 'category_id' => $categoryID
             ]
         );
@@ -157,7 +158,7 @@ class GenreControllerTest extends TestCase
         $this->assertHasRelationshipRegister(
             'category_genre',
             [
-                'genre_id' => $response->json('id'),
+                'genre_id' => $response->json('data.id'),
                 'category_id' => $categoryID
             ]
         );
@@ -174,7 +175,7 @@ class GenreControllerTest extends TestCase
         $this->assertHasRelationshipRegister(
             'category_genre',
             [
-                'genre_id' => $response->json('id'),
+                'genre_id' => $response->json('data.id'),
                 'category_id' => $categoriesID[0]
             ]
         );
@@ -185,18 +186,18 @@ class GenreControllerTest extends TestCase
         ];
         $response = $this->json(
             'PUT',
-            route('genres.update',['genre' => $response->json('id')]),
+            route('genres.update',['genre' => $response->json('data.id')]),
             $sendData
         );
         $this->assertDatabaseMissing('category_genre', [
             'category_id' => $categoriesID[0],
-            'genre_id' => $response->json('id')
+            'genre_id' => $response->json('data.id')
         ]);
 
         $this->assertHasRelationshipRegister(
             'category_genre',
             [
-                'genre_id' => $response->json('id'),
+                'genre_id' => $response->json('data.id'),
                 'category_id' => $categoriesID[1]
             ]
         );
@@ -204,7 +205,7 @@ class GenreControllerTest extends TestCase
         $this->assertHasRelationshipRegister(
             'category_genre',
             [
-                'genre_id' => $response->json('id'),
+                'genre_id' => $response->json('data.id'),
                 'category_id' => $categoriesID[2]
             ]
         );

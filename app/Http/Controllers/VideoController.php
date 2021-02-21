@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\VideoResource;
 use App\Models\Video;
 use App\Rules\GenresHasCategoriesRule;
 use Illuminate\Http\Request;
@@ -38,7 +39,9 @@ class VideoController extends BasicCrudController
         $validateData = $this->validate($request, $this->rulesStore());
         $obj = $this->model()::create($validateData);
         $obj->refresh();
-        return $obj;
+
+        $resource = $this->resource();
+        return new $resource($obj);
 
     }
 
@@ -49,7 +52,8 @@ class VideoController extends BasicCrudController
         $validateData = $this->validate($request, $this->rulesUpdate());
         $obj->update($validateData);
 
-        return $obj;
+        $resource = $this->resource();
+        return new $resource($obj);
 
     }
 
@@ -73,5 +77,15 @@ class VideoController extends BasicCrudController
     protected function rulesUpdate()
     {
         return $this->rules;
+    }
+
+    protected function resourceCollection()
+    {
+        return $this->resource();
+    }
+
+    protected function resource()
+    {
+        return VideoResource::class;
     }
 }

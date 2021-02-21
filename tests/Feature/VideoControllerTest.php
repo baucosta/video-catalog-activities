@@ -3,21 +3,37 @@
 namespace Tests\Feature;
 
 use App\Http\Controllers\VideoController;
+use App\Http\Resources\VideoResource;
 use App\Models\Category;
 use App\Models\Genre;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use App\Models\Video;
 use Illuminate\Http\UploadedFile;
+use Tests\Traits\TestResources;
 use Tests\Traits\TestSaves;
 use Tests\Traits\TestUploads;
 use Tests\Traits\TestValidations;
 
 class VideoControllerTest extends TestCase
 {
-    use DatabaseMigrations, TestValidations, TestSaves, TestUploads;
+    use DatabaseMigrations, TestValidations, TestSaves, TestUploads, TestResources;
     private $video;
     private $sendData;
+    private $serializedFields = [
+        'title',
+        'description',
+        'year_launched',
+        'opened',
+        'rating',
+        'duration',
+        'video_file',
+        'thumb_file',
+        'banner_file',
+        'trailer_file',
+        'categories',
+        'genres'
+    ];
 
     protected function setUp(): void
     {
@@ -49,7 +65,17 @@ class VideoControllerTest extends TestCase
 
         $response
             ->assertStatus(200)
-            ->assertJson([$this->video->toArray()]);
+            ->assertJson($this->assertQuantityPaginate)
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => $this->serializedFields
+                ],
+                'links' => [],
+                'meta' => []
+            ]);
+
+        $resource = $this->resource()::collection(collect([$this->video]));
+        $this->assertResource($response, $resource);
     }
 
     public function testShow()
@@ -58,7 +84,11 @@ class VideoControllerTest extends TestCase
 
         $response
             ->assertStatus(200)
-            ->assertJson($this->video->toArray());
+            ->assertJsonStructure([
+                'data' => $this->serializedFields
+            ]);
+
+        $this->assertResourceForFind($response);
     }
 
     public function testInvalidationRequired() {
@@ -195,14 +225,17 @@ class VideoControllerTest extends TestCase
                 $value['send_data'],
                 $value['test_data'] + ['deleted_at' => null]
             );
+
             $response->assertJsonStructure([
-                'created_at', 'updated_at'
+                'data' => $this->serializedFields
             ]);
+
+            $this->assertResourceForFind($response);
 
             $this->assertHasRelationshipRegister(
                 'category_video',
                 [
-                    'video_id' => $response->json('id'),
+                    'video_id' => $response->json('data.id'),
                     'category_id' => $value['send_data']['categories_id'][0]
                 ]
             );
@@ -210,7 +243,7 @@ class VideoControllerTest extends TestCase
             $this->assertHasRelationshipRegister(
                 'genre_video',
                 [
-                    'video_id' => $response->json('id'),
+                    'video_id' => $response->json('data.id'),
                     'genre_id' => $value['send_data']['genres_id'][0]
                 ]
             );
@@ -220,13 +253,15 @@ class VideoControllerTest extends TestCase
                 $value['test_data'] + ['deleted_at' => null]
             );
             $response->assertJsonStructure([
-                'created_at', 'updated_at'
+                'data' => $this->serializedFields
             ]);
+
+            $this->assertResourceForFind($response);
 
             $this->assertHasRelationshipRegister(
                 'category_video',
                 [
-                    'video_id' => $response->json('id'),
+                    'video_id' => $response->json('data.id'),
                     'category_id' => $value['send_data']['categories_id'][0]
                 ]
             );
@@ -234,7 +269,7 @@ class VideoControllerTest extends TestCase
             $this->assertHasRelationshipRegister(
                 'genre_video',
                 [
-                    'video_id' => $response->json('id'),
+                    'video_id' => $response->json('data.id'),
                     'genre_id' => $value['send_data']['genres_id'][0]
                 ]
             );
@@ -288,15 +323,17 @@ class VideoControllerTest extends TestCase
                 $value['test_data'] + ['deleted_at' => null]
             );
             $response->assertJsonStructure([
-                'created_at',
-                'updated_at'
+                'data' => $this->serializedFields
             ]);
+
+            $this->assertResourceForFind($response);
+
             $this->assertHasCategory(
-                $response->json('id'),
+                $response->json('data.id'),
                 $value['send_data']['categories_id'][0]
             );
             $this->assertHasGenre(
-                $response->json('id'),
+                $response->json('data.id'),
                 $value['send_data']['genres_id'][0]
             );
 
@@ -305,15 +342,17 @@ class VideoControllerTest extends TestCase
                 $value['test_data'] + ['deleted_at' => null]
             );
             $response->assertJsonStructure([
-                'created_at',
-                'updated_at'
+                'data' => $this->serializedFields
             ]);
+
+            $this->assertResourceForFind($response);
+
             $this->assertHasCategory(
-                $response->json('id'),
+                $response->json('data.id'),
                 $value['send_data']['categories_id'][0]
             );
             $this->assertHasGenre(
-                $response->json('id'),
+                $response->json('data.id'),
                 $value['send_data']['genres_id'][0]
             );
         }
@@ -525,5 +564,10 @@ class VideoControllerTest extends TestCase
 
     protected function controller() {
         return VideoController::class;
+    }
+
+    protected function resource()
+    {
+        return VideoResource::class;
     }
 }
