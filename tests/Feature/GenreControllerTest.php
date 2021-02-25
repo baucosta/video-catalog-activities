@@ -20,10 +20,20 @@ class GenreControllerTest extends TestCase
         'id',
         'name',
         'is_active',
-        'categories',
         'created_at',
         'updated_at',
-        'deleted_at'
+        'deleted_at',
+        'categories' => [
+            '*' => [
+                'id',
+                'name',
+                'description',
+                'is_active',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ]
+        ]
     ];
 
     protected function setUp(): void
@@ -57,7 +67,8 @@ class GenreControllerTest extends TestCase
             ->assertStatus(200)
             ->assertJsonStructure([
                 'data' => $this->serializedFields
-            ]);
+            ])
+            ->assertJsonFragment($this->genre->toArray());
 
         $this->assertResourceForFind($response);
     }

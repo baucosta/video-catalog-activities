@@ -6,12 +6,53 @@ use App\Models\Category;
 use App\Models\Genre;
 use App\Models\Video;
 use App\Http\Controllers\VideoController;
+use App\Http\Resources\VideoResource;
+use Illuminate\Foundation\Testing\TestResponse;
 use Illuminate\Support\Arr;
+use Tests\Traits\TestResources;
 use Tests\Traits\TestSaves;
 use Tests\Traits\TestValidations;
 
 class VideoControllerCrudTest extends BaseVideoControllerTestCase {
-    use TestValidations, TestSaves;
+    use TestValidations, TestSaves, TestResources;
+
+    private $serializedFields = [
+        'id',
+        'title',
+        'description',
+        'year_launched',
+        'rating',
+        'duration',
+        'opened',
+        'thumb_file_url',
+        'banner_file_url',
+        'video_file_url',
+        'trailer_file_url',
+        'created_at',
+        'updated_at',
+        'deleted_at',
+        'categories' => [
+            '*' => [
+                'id',
+                'name',
+                'description',
+                'is_active',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ]
+        ],
+        'genres' => [
+            '*' => [
+                'id',
+                'name',
+                'is_active',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ]
+        ]
+    ];
 
     public function testIndex()
     {
@@ -19,7 +60,17 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase {
 
         $response
             ->assertStatus(200)
-            ->assertJson([$this->video->toArray()]);
+            ->assertJson([$this->video->toArray()])
+            ->assertJsonStructure([
+                'data' => [
+                    '*' => $this->serializedFields
+                ],
+                'links' => [],
+                'meta' => []
+            ]);
+
+        $resource = $this->resource()::collection(collect([$this->video]));
+        $this->assertResource($response, $resource);
     }
 
     public function testShow()
@@ -28,7 +79,12 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase {
 
         $response
             ->assertStatus(200)
-            ->assertJson($this->video->toArray());
+            ->assertJsonStructure([
+                'data' => $this->serializedFields
+            ])
+            ->assertJsonFragment($this->video->toArray());
+
+        $this->assertResourceForFind($response);
     }
 
     public function testInvalidationRequired() {
@@ -313,6 +369,11 @@ class VideoControllerCrudTest extends BaseVideoControllerTestCase {
 
     protected function controller() {
         return VideoController::class;
+    }
+
+    protected function resource()
+    {
+        return VideoResource::class;
     }
 
 }
