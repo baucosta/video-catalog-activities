@@ -20,8 +20,8 @@ class VideoResource extends JsonResource
             'video_file_url' => $this->video_file_url,
             'thumb_file_url' => $this->thumb_file_url,
             'banner_file_url' => $this->banner_file_url,
-            'trailer_file_url' => $this->trailer_file_url,
-        ]
+            'trailer_file_url' => $this->trailer_file_url
+        ];
         // return [
         //     'id' => $this->id,
         //     'title' => $this->title,
