@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Resources\VideoResource;
 use App\Models\Video;
 use Exception;
 use Illuminate\Database\Events\TransactionCommitted;
@@ -95,10 +96,13 @@ class VideoUploadTest extends BaseVideoTestCase {
             $fileFields[$field] = "$field.test";
         }
         $video = factory(Video::class)->create($fileFields);
+
         $localDriver = config('filesystems.default');
         $baseUrl = config('filesystems.disks.'.$localDriver)['url'];
+
         foreach($fileFields as $field => $value) {
             $fileUrl = $video->{"{$field}_url"};
+
             $this->assertEquals("{$baseUrl}/$video->id/$value", $fileUrl);
         }
     }

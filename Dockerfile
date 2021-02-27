@@ -1,4 +1,4 @@
-FROM php:7.3.6-fpm-alpine3.9
+FROM php:7.3.6-fpm-alpine3.10
 
 RUN apk add --no-cache shadow openssl \
     bash mysql-client nodejs npm git \
@@ -19,6 +19,10 @@ RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSI
     && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
 
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Configures to react
+
+RUN npm config set cache /var/www/.npm-cache --global
 
 RUN usermod -u 1000 www-data
 

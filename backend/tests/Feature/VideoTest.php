@@ -187,8 +187,8 @@ class VideoTest extends TestCase
     private function getFiles() {
         return [
             'video_file' => UploadedFile::fake()->create('video_file.mp4'),
-            'thumb_file' => UploadedFile::fake()->create('thumb_file.mp4'),
-            'banner_file' => UploadedFile::fake()->create('banner_file.mp4'),
+            'thumb_file' => UploadedFile::fake()->create('thumb_file.jpg'),
+            'banner_file' => UploadedFile::fake()->create('banner_file.jpg'),
             'trailer_file' => UploadedFile::fake()->create('trailer_file.mp4')
         ];
     }
