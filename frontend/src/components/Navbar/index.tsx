@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { AppBar, Button, makeStyles, Theme, Toolbar, Typography } from '@material-ui/core';
 import logo from '../../static/img/logo.png';
+import { Menu } from './Menu';
 
 const useStyles = makeStyles((theme: Theme) => ({
     toolbar: {
@@ -24,6 +25,8 @@ export const Navbar: React.FC = () => {
     return (
         <AppBar>
             <Toolbar className={classes.toolbar}>
+                <Menu/>
+
                 <Typography className={classes.title}>
                     <img src={logo} alt="CodeFlix" className={classes.logo} />
                 </Typography>
