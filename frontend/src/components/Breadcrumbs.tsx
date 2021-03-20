@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import {Location} from 'history';
 import routes from '../routes';
 import RouteParser from 'route-parser';
-import { Container } from '@material-ui/core';
+import { Box, Container } from '@material-ui/core';
 
 interface ListItemLinkProps extends LinkProps {
   to: string;
@@ -73,11 +73,13 @@ export default function Breadcrumbs() {
 
   return (
     <Container>
-      <Route>
-        {
-          ({location}: {location: Location}) => makeBreadCrumb(location)
-        }
-      </Route>
+      <Box paddingBottom={2}>
+        <Route>
+          {
+            ({location}: {location: Location}) => makeBreadCrumb(location)
+          }
+        </Route>
+      </Box>
       
     </Container>
   );

@@ -1,5 +1,5 @@
 // @flow 
-import { Container, makeStyles, Typography } from '@material-ui/core';
+import { Box, Container, makeStyles, Typography } from '@material-ui/core';
 import * as React from 'react';
 
 const useStyles = makeStyles({
@@ -19,7 +19,9 @@ export const Page:React.FC<PageProps> = (props) => {
             <Typography className={classes.title} component="h1" variant="h5">
                 {props.title}
             </Typography>
-            {props.children}
+            <Box paddingTop={2}>
+                {props.children}
+            </Box>
         </Container>
     );
 };
