@@ -1,6 +1,6 @@
 import {RouteProps} from "react-router-dom";
 import CategoryList from "../pages/category/PageList";
-import CastMemberList from "../pages/cast_member/PageList";
+import CastMemberList from "../pages/cast-member/PageList";
 import GenreList from "../pages/genre/PageList";
 import Dashboard from "../pages/Dashboard";
 
