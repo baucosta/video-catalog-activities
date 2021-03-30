@@ -2,6 +2,8 @@
 import { Box, Button, Checkbox, makeStyles, TextField, Theme } from '@material-ui/core';
 import * as React from 'react';
 import {ButtonProps} from "@material-ui/core/Button";
+import { useForm } from 'react-hook-form';
+import categoryHttp from '../../utils/http/category-http';
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
@@ -13,20 +15,33 @@ const useStyles = makeStyles((theme: Theme) => {
 
 export const Form = () => {
 
-    const classes = useStyles();
+    const classes = useStyles({
+        defaultValues: {
+            is_active: true
+        }
+    });
 
     const buttonProps: ButtonProps = {
         className: classes.submit,
         variant: "outlined",
     }
 
+    const {register, handleSubmit, getValues} = useForm();
+
+    function onSubmit(formData, event) {
+        categoryHttp
+            .create(formData)
+            .then((response) => console.log(response));
+    }
+
     return (
-        <form>
+        <form onSubmit={handleSubmit(onSubmit)}>
             <TextField
                 name="name"
                 label="Nome"
                 fullWidth
-                variant={"outlined"} />
+                variant={"outlined"} 
+                inputRef={register} />
 
             <TextField
                 name="description"
@@ -35,16 +50,19 @@ export const Form = () => {
                 rows="4"
                 fullWidth
                 variant={"outlined"}
-                margin={"normal"} />
+                margin={"normal"} 
+                inputRef={register} />
             
             <Checkbox 
                 name="is_active"
+                inputRef={register}
+                defaultChecked
                 />
             Ativo?
 
             <Box dir={"rtl"}>
                 <Button {...buttonProps} type="submit">Salvar e continuar editando</Button>
-                <Button {...buttonProps}>Salvar</Button>
+                <Button {...buttonProps} onClick={() => onSubmit(getValues(), null)}>Salvar</Button>
             </Box>
         </form>
     );
