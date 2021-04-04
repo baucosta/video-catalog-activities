@@ -1,16 +1,18 @@
-// @flow 
-import { Box, Button, Checkbox, FormControl, InputLabel, makeStyles, Select, TextField, Theme } from '@material-ui/core';
+import { Box, Button, Checkbox, FormControl, InputLabel, makeStyles, Select, TextField, Theme} from '@material-ui/core';
 import * as React from 'react';
 import {ButtonProps} from "@material-ui/core/Button";
 import { useForm } from 'react-hook-form';
 import genreHttp from '../../utils/http/genre-http';
+import categoryHttp from '../../utils/http/category-http';
+import {Category} from '../category/Table';
+import {useEffect, useState} from "react";
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
         submit: {
             margin: theme.spacing(1)
         },
-        selectField: {
+        formControl: {
             margin: theme.spacing(1),
         },
     }
@@ -24,16 +26,32 @@ export const Form = () => {
         }
     });
 
+    useEffect(() => {
+        categoryHttp
+            .list<{data: Category[]}>()
+            .then(({data}) => setData(data.data))
+    }, []);
+
+    const [data, setData] = useState<Category[]>([]);
+
     const buttonProps: ButtonProps = {
         className: classes.submit,
         variant: "outlined",
     }
 
-    const {register, handleSubmit, setValue, getValues} = useForm();
+    const {register, handleSubmit, watch, setValue, getValues} = useForm();
+    const watchCategories = watch("categories");
 
-    const handleChange = (event, value) => {
-        console.log(event.target.value);
-        setValue("type", value);
+    const handleChangeMultiple = (event: React.ChangeEvent<{ value: unknown }>) => {
+        const { options } = event.target as HTMLSelectElement;
+        const value: string[] = [];
+
+        for (let i = 0, l = options.length; i < l; i += 1) {
+            if (options[i].selected) {
+                value.push(options[i].value);
+            }
+        }
+        setValue("categories_id", value);
     };
 
     function onSubmit(formData, event) {
@@ -52,20 +70,24 @@ export const Form = () => {
                 variant={"outlined"} 
                 inputRef={register} />
             
-            <FormControl fullWidth className={classes.selectField}>
-                <InputLabel htmlFor="age-native-simple">Age</InputLabel>
+            <FormControl fullWidth className={classes.formControl}>
+                <InputLabel shrink htmlFor="select-multiple-native">
+                    Categorias
+                </InputLabel>
                 <Select
-                    {...register("categories")}
+                    {...register("categories_id")}
+                    multiple
                     native
-                    onChange={handleChange}
+                    onChange={handleChangeMultiple}
                     inputProps={{
-                        name: 'age',
-                        id: 'age-native-simple',
-                    }}>
-                    <option aria-label="None" value="" />
-                    <option value={10}>Ten</option>
-                    <option value={20}>Twenty</option>
-                    <option value={30}>Thirty</option>
+                        id: 'select-multiple-native',
+                    }}
+                >
+                {data.map((category: Category) => (
+                    <option key={category.id} value={category.id}>
+                    {category.name}
+                    </option>
+                ))}
                 </Select>
             </FormControl>
             

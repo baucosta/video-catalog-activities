@@ -4,16 +4,10 @@ import Typography from '@material-ui/core/Typography';
 import MuiBreadcrumbs from '@material-ui/core/Breadcrumbs';
 import { Route } from 'react-router';
 import { Link as RouterLink } from 'react-router-dom';
-import React, { useState } from 'react';
 import {Location} from 'history';
 import routes from '../routes';
 import RouteParser from 'route-parser';
 import { Box, Container } from '@material-ui/core';
-
-interface ListItemLinkProps extends LinkProps {
-  to: string;
-  open?: boolean;
-}
 
 const breadcrumbNameMap: { [key: string]: string } = {};
 routes.forEach(route => breadcrumbNameMap[route.path as string] = route.label);

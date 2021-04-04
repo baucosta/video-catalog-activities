@@ -25,11 +25,12 @@ export const Form = () => {
 
     const {register, handleSubmit, setValue, getValues} = useForm();
 
-    const handleChange = (event, value) => {
-        setValue("type", value);
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setValue("type", (event.target as HTMLInputElement).value);
     };
 
     function onSubmit(formData, event) {
+        console.log(formData);
         castMemberHttp
             .create(formData)
             .then((response) => console.log(response))

@@ -1,7 +1,6 @@
 import React from 'react';
-import logo from './logo.svg';
 // import './App.css';
-import { Box, Button } from '@material-ui/core';
+import { Box } from '@material-ui/core';
 import { Navbar } from './components/Navbar';
 import { BrowserRouter } from 'react-router-dom';
 import AppRouter from './routes/AppRouter';
