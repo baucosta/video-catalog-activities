@@ -7,10 +7,17 @@ import { Chip } from '@material-ui/core';
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
 
-const CastMemberTypeMap = {
-    1: 'Diretor',
-    2: 'Ator'
-};
+export const CastMemberTypeMap = [
+    {
+        value: "1",
+        description: 'Diretor',
+    },
+    {
+        value: "2",
+        description: 'Ator',
+    },
+];
+
 
 const columnsDefinition: MUIDataTableColumn[] = [
     {
@@ -22,7 +29,9 @@ const columnsDefinition: MUIDataTableColumn[] = [
         label: "Tipo",
         options: {
             customBodyRender(value, tableMeta, updateValue) {
-                return CastMemberTypeMap[value];
+                return CastMemberTypeMap
+                .filter(resp => resp.value == value)
+                .map(resp => resp.description);
             }
         }
     },

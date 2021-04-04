@@ -13,7 +13,7 @@ const List = () => {
                     title="Adicionar membro"
                     size="small"
                     component={Link}
-                    to="/cast-members/create">
+                    to="/cast_members/create">
                         <AddIcon/>
                 </Fab>
             </Box>
