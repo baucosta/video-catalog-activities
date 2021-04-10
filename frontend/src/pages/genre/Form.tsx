@@ -26,21 +26,30 @@ export const Form = () => {
         }
     });
 
-    useEffect(() => {
-        categoryHttp
-            .list<{data: Category[]}>()
-            .then(({data}) => setData(data.data))
-    }, []);
+    const {register, handleSubmit, watch, setValue, getValues} = useForm({
+        defaultValues: {
+            categories_id: []
+        }
+    });
 
     const [data, setData] = useState<Category[]>([]);
 
+    useEffect(() => {
+        register({name: "categories_id"})
+
+        categoryHttp
+            .list<{data: Category[]}>()
+            .then(({data}) => setData(data.data))
+    }, [register]);
+
+
     const buttonProps: ButtonProps = {
         className: classes.submit,
-        variant: "outlined",
+        variant: "contained",
+        color: 'secondary',
     }
 
-    const {register, handleSubmit, watch, setValue, getValues} = useForm();
-    const watchCategories = watch("categories");
+    
 
     const handleChangeMultiple = (event: React.ChangeEvent<{ value: unknown }>) => {
         const { options } = event.target as HTMLSelectElement;
@@ -75,7 +84,8 @@ export const Form = () => {
                     Categorias
                 </InputLabel>
                 <Select
-                    {...register("categories_id")}
+                    name="categories_id"
+                    value={watch('categories_id')}
                     multiple
                     native
                     onChange={handleChangeMultiple}
@@ -85,7 +95,7 @@ export const Form = () => {
                 >
                 {data.map((category: Category) => (
                     <option key={category.id} value={category.id}>
-                    {category.name}
+                        {category.name}
                     </option>
                 ))}
                 </Select>

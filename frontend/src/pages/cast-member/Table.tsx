@@ -8,11 +8,11 @@ import parseISO from "date-fns/parseISO";
 
 export const CastMemberTypeMap = [
     {
-        value: "1",
+        value: 1,
         description: 'Diretor',
     },
     {
-        value: "2",
+        value: 2,
         description: 'Ator',
     },
 ];
