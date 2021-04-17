@@ -1,9 +1,13 @@
 // @flow 
-import { Box, Button, Checkbox, makeStyles, TextField, Theme } from '@material-ui/core';
-import * as React from 'react';
+import { Box, Button, Checkbox, FormControlLabel, makeStyles, TextField, Theme } from '@material-ui/core';
+import React, { useCallback, useEffect, useState } from "react";
 import {ButtonProps} from "@material-ui/core/Button";
 import { useForm } from 'react-hook-form';
 import categoryHttp from '../../utils/http/category-http';
+import *  as yup from '../../utils/vendor/yup';
+import { useHistory, useParams } from 'react-router';
+import { useSnackbar } from 'notistack';
+import { Category } from './Table';
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
@@ -11,7 +15,42 @@ const useStyles = makeStyles((theme: Theme) => {
             margin: theme.spacing(1)
         }
     }
-})
+});
+
+const useYupValidationResolver = validationSchema =>
+  useCallback(
+    async data => {
+      try {
+        const values = await validationSchema.validate(data, {
+          abortEarly: false
+        });
+
+        return {
+          values,
+          errors: {}
+        };
+      } catch (errors) {
+        return {
+          values: {},
+          errors: errors.inner.reduce(
+            (allErrors, currentError) => ({
+              ...allErrors,
+              [currentError.path]: {
+                type: currentError.type ?? "validation",
+                message: currentError.message
+              }
+            }),
+            {}
+          )
+        };
+      }
+    },
+    [validationSchema]
+  );
+
+const validationSchema = yup.object().shape({
+    name: yup.string().label('Nome').required("Nome é requerido").max(255)
+});
 
 export const Form = () => {
 
@@ -21,18 +60,80 @@ export const Form = () => {
         }
     });
 
+    const resolver = useYupValidationResolver(validationSchema);
+
+    const {register, handleSubmit, setValue, getValues, errors, reset, watch} = useForm<Category>({
+        resolver,
+        defaultValues: {
+          is_active: true
+        }
+    });
+
+    const snackbar = useSnackbar();
+    const history = useHistory();
+    const { id } = useParams<{ id: string }>();
+    const [category, setCategory] = useState<{id: string} | null>(null);
+    const [loading, setLoading] = useState<boolean>(false);
+
     const buttonProps: ButtonProps = {
-        className: classes.submit,
-        variant: "contained",
-        color: 'secondary',
+      className: classes.submit,
+      variant: "contained",
+      color: 'secondary',
+      disabled: loading
     }
 
-    const {register, handleSubmit, getValues} = useForm();
+
+    useEffect(() => {
+      register({name: "is_active"})
+    }, [register]);
+
+    useEffect(() => {
+      if (!id) {
+        return ;
+      }
+
+      setLoading(true);
+
+      categoryHttp
+            .get(id)
+            .then(({data}) => {
+                setCategory(data.data)
+                reset(data.data)
+            })
+            .finally(() => setLoading(false))
+    }, []);
 
     function onSubmit(formData, event) {
-        categoryHttp
-            .create(formData)
-            .then((response) => console.log(response));
+        setLoading(true);
+
+        const http = !category
+          ? categoryHttp.create(formData)
+          : categoryHttp.update(category.id, formData)
+
+          http
+            .then(({data}) => {
+              snackbar.enqueueSnackbar(
+                'Categoria salva com sucesso',
+                {variant: 'success'}
+              );
+
+              setTimeout(() => {
+                event ? (
+                  id 
+                    ? history.replace(`/categories/${data.data.id}/edit`)
+                    : history.push(`/categories/${data.data.id}/edit`)
+                )
+                : history.push('/categories')
+              });
+            })
+            .catch((error) => {
+              console.log(error);
+              snackbar.enqueueSnackbar(
+                'Erro ao salvar categoria',
+                {variant: 'error'}
+              );
+            })
+            .finally(() => setLoading(false))
     }
 
     return (
@@ -42,7 +143,12 @@ export const Form = () => {
                 label="Nome"
                 fullWidth
                 variant={"outlined"} 
-                inputRef={register} />
+                inputRef={register}
+                InputLabelProps={{shrink: true}}
+                disabled={loading}
+                error={errors.name !== undefined}
+                helperText={errors.name && errors.name.message} 
+            />
 
             <TextField
                 name="description"
@@ -52,15 +158,26 @@ export const Form = () => {
                 fullWidth
                 variant={"outlined"}
                 margin={"normal"} 
-                inputRef={register} />
-            
-            <Checkbox 
-                name="is_active"
-                color={"primary"}
                 inputRef={register}
-                defaultChecked
-                />
-            Ativo?
+                InputLabelProps={{shrink: true}} 
+                disabled={loading}
+            />
+            
+            <FormControlLabel 
+                disabled={loading}
+                control={
+                  <Checkbox 
+                    name="is_active"
+                    color={"primary"}
+                    onChange={
+                      () => setValue('is_active', !getValues()['is_active'])
+                    }
+                    checked={watch('is_active')}
+                  />
+                }
+                label={'Ativo?'}
+                labelPlacement={'end'}
+            />
 
             <Box dir={"rtl"}>
                 <Button 

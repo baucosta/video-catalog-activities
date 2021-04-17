@@ -35,6 +35,13 @@ const routes: MyRouteProps[] = [
         exact: true
     },
     {
+        name: 'categories.edit',
+        label: 'Editar categoria',
+        path: '/categories/:id/edit',
+        component: CategoryCreate,
+        exact: true
+    },
+    {
         name: 'cast_members.list',
         label: 'Membros do Elenco',
         path: '/cast_members',
