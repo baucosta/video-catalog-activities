@@ -17,6 +17,12 @@ export const CastMemberTypeMap = [
     },
 ];
 
+export interface CastMember {
+    id: string;
+    name: string;
+    type: number;
+}
+
 
 const columnsDefinition: MUIDataTableColumn[] = [
     {

@@ -41,6 +41,13 @@ const columnsDefinition: MUIDataTableColumn[] = [
     },
 ];
 
+export interface Genre {
+    id: string;
+    name: string;
+    is_active: boolean;
+    categories_id: string[];
+}
+
 
 type Props = {
     

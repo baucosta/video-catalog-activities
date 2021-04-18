@@ -1,6 +1,6 @@
 // @flow 
 import { Box, Button, Checkbox, FormControlLabel, makeStyles, TextField, Theme } from '@material-ui/core';
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {ButtonProps} from "@material-ui/core/Button";
 import { useForm } from 'react-hook-form';
 import categoryHttp from '../../utils/http/category-http';
@@ -17,36 +17,7 @@ const useStyles = makeStyles((theme: Theme) => {
     }
 });
 
-const useYupValidationResolver = validationSchema =>
-  useCallback(
-    async data => {
-      try {
-        const values = await validationSchema.validate(data, {
-          abortEarly: false
-        });
 
-        return {
-          values,
-          errors: {}
-        };
-      } catch (errors) {
-        return {
-          values: {},
-          errors: errors.inner.reduce(
-            (allErrors, currentError) => ({
-              ...allErrors,
-              [currentError.path]: {
-                type: currentError.type ?? "validation",
-                message: currentError.message
-              }
-            }),
-            {}
-          )
-        };
-      }
-    },
-    [validationSchema]
-  );
 
 const validationSchema = yup.object().shape({
     name: yup.string().label('Nome').required("Nome é requerido").max(255)
@@ -60,7 +31,7 @@ export const Form = () => {
         }
     });
 
-    const resolver = useYupValidationResolver(validationSchema);
+    const resolver = yup.useYupValidationResolver(validationSchema);
 
     const {register, handleSubmit, setValue, getValues, errors, reset, watch} = useForm<Category>({
         resolver,
