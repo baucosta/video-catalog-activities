@@ -64,6 +64,8 @@ export const Form = () => {
         register({name: "is_active"})
     }, [register]);
 
+    const categoriesIds: string[] = [];
+
     useEffect(() => {
         if (!id) {
           return ;
@@ -72,13 +74,19 @@ export const Form = () => {
         setLoading(true);
   
         genreHttp
-              .get(id)
-              .then(({data}) => {
-                    setGenre(data.data)
-                    reset(data.data)
-              })
-              .finally(() => setLoading(false))
-      }, []);
+            .get(id)
+            .then(({data}) => {
+                let genreType = data.data as Genre;
+
+                genreType.categories_id = [];
+                data.data.categories
+                .map(category => genreType.categories_id.push(category.id))
+
+                setGenre(genreType)
+                reset(data.data)
+            })
+            .finally(() => setLoading(false))
+    }, []);
 
 
     const buttonProps: ButtonProps = {
@@ -160,7 +168,6 @@ export const Form = () => {
                     value={watch('categories_id')}
                     multiple
                     native
-                    displayEmpty={false}
                     onChange={handleChangeMultiple}
                     inputProps={{
                         id: 'select-multiple-native',
