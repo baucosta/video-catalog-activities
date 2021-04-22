@@ -48,12 +48,10 @@ const Table = (props: Props) => {
     const [data, setData] = useState<Category[]>([]);
 
     useEffect(() => {
-        categoryHttp
-            .list<{data: Category[]}>()
-            .then(({data}) => setData(data.data))
-        // httpVideo.get('categories').then(
-        //     response => setData(response.data.data)
-        // )
+        (async function geCategories() {
+            const {data} = await categoryHttp.list<{data: Category[]}>()
+            setData(data.data)
+        })()
     }, []);
 
     return (

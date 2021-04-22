@@ -57,9 +57,10 @@ const Table = (props: Props) => {
     const [data, setData] = useState([]);
 
     useEffect(() => {
-        httpVideo.get('genres').then(
-            response => setData(response.data.data)
-        )
+        (async function geCategories() {
+            const {data} = await httpVideo.get('genres')
+            setData(data.data)
+        })()
     }, []);
 
     return (

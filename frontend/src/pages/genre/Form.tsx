@@ -1,4 +1,4 @@
-import { Box, Button, Checkbox, FormControl, FormControlLabel, InputLabel, makeStyles, Select, TextField, Theme} from '@material-ui/core';
+import { Box, Button, Checkbox, FormControl, FormControlLabel, FormHelperText, InputLabel, makeStyles, Select, TextField, Theme} from '@material-ui/core';
 import {ButtonProps} from "@material-ui/core/Button";
 import { useForm } from 'react-hook-form';
 import genreHttp from '../../utils/http/genre-http';
@@ -22,24 +22,24 @@ const useStyles = makeStyles((theme: Theme) => {
 })
 
 const validationSchema = yup.object().shape({
-    name: yup.string().label('Nome').required("Nome é requerido").max(255)
+    name: yup.string().label('Nome').required("Nome é requerido").max(255),
+    categories_id: yup.array().required('Uma categoria é requerida'),
 });
 
 
 export const Form = () => {
-
-    const classes = useStyles({
-        defaultValues: {
-            is_active: true
-        }
-    });
-
     const resolver = yup.useYupValidationResolver(validationSchema);
 
     const {register, handleSubmit, watch, setValue, getValues, errors, reset} = useForm<Genre>({
         resolver,
         defaultValues: {
             categories_id: [],
+            is_active: true
+        }
+    });
+
+    const classes = useStyles({
+        defaultValues: {
             is_active: true
         }
     });
@@ -64,18 +64,16 @@ export const Form = () => {
         register({name: "is_active"})
     }, [register]);
 
-    const categoriesIds: string[] = [];
-
     useEffect(() => {
         if (!id) {
           return ;
         }
   
-        setLoading(true);
-  
-        genreHttp
-            .get(id)
-            .then(({data}) => {
+        (async function getGenre() {
+            setLoading(true);
+    
+            try {
+                const {data} = await genreHttp.get(id);
                 let genreType = data.data as Genre;
 
                 genreType.categories_id = [];
@@ -84,8 +82,17 @@ export const Form = () => {
 
                 setGenre(genreType)
                 reset(data.data)
-            })
-            .finally(() => setLoading(false))
+            } catch(error) {
+                console.log(error);
+    
+                snackbar.enqueueSnackbar(
+                  'Não foi possível carregar as informações',
+                  {variant: 'error'}
+                );
+            } finally {
+                setLoading(false)
+            }
+        })()
     }, []);
 
 
@@ -110,39 +117,38 @@ export const Form = () => {
         setValue("categories_id", value);
     };
 
-    function onSubmit(formData, event) {
-        console.log(formData);
-
+    async function onSubmit(formData, event) {
         setLoading(true);
 
-        const http = !genre
-            ? genreHttp.create(formData)
-            : genreHttp.update(genre.id, formData)
+        try {
+            const http = !genre
+                ? genreHttp.create(formData)
+                : genreHttp.update(genre.id, formData)
 
-            http
-            .then(({data}) => {
-                snackbar.enqueueSnackbar(
+            const {data} = await http;
+           
+            snackbar.enqueueSnackbar(
                 'Gênero salvo com sucesso',
                 {variant: 'success'}
-                );
+            );
 
-                setTimeout(() => {
+            setTimeout(() => {
                 event ? (
                     id 
                     ? history.replace(`/genres/${data.data.id}/edit`)
                     : history.push(`/genres/${data.data.id}/edit`)
                 )
                 : history.push('/genres')
-                });
-            })
-            .catch((error) => {
-                console.log(error);
-                snackbar.enqueueSnackbar(
-                'Erro ao salvar gênero',
-                {variant: 'error'}
-                );
-            })
-            .finally(() => setLoading(false))
+            });
+        } catch(error) {
+          console.log(error);
+          snackbar.enqueueSnackbar(
+            'Erro ao salvar categoria',
+            {variant: 'error'}
+          );
+        } finally {
+          setLoading(false);
+        }
     }
 
     return (
@@ -159,7 +165,7 @@ export const Form = () => {
                 helperText={errors.name && errors.name.message}
             />
             
-            <FormControl fullWidth className={classes.formControl}>
+            <FormControl error={errors.categories_id !== undefined} fullWidth className={classes.formControl}>
                 <InputLabel shrink htmlFor="select-multiple-native">
                     Categorias
                 </InputLabel>
@@ -182,6 +188,12 @@ export const Form = () => {
                     </option>
                 ))}
                 </Select>
+
+                {
+                    errors.categories_id
+                        ? <FormHelperText id="type-helper-text">Preencha a categoria</FormHelperText>
+                        : null
+                }
             </FormControl>
             
             <FormControlLabel 

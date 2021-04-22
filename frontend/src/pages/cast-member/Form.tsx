@@ -1,5 +1,5 @@
 // @flow 
-import { Box, Button, FormControl, FormControlLabel, FormLabel, makeStyles, Radio, RadioGroup, TextField, Theme } from '@material-ui/core';
+import { Box, Button, FormControl, FormControlLabel, FormHelperText, FormLabel, makeStyles, Radio, RadioGroup, TextField, Theme } from '@material-ui/core';
 import * as React from 'react';
 import {ButtonProps} from "@material-ui/core/Button";
 import { useForm } from 'react-hook-form';
@@ -25,14 +25,13 @@ const validationSchema = yup.object().shape({
 
 
 export const Form = () => {
-
-    const classes = useStyles();
-
     const resolver = yup.useYupValidationResolver(validationSchema);
 
     const {register, handleSubmit, setValue, getValues, errors, reset, watch} = useForm<CastMember>({
         resolver
     });
+
+    const classes = useStyles();
 
     useEffect(() => {
         register({name: "type"})
@@ -59,53 +58,59 @@ export const Form = () => {
         if (!id) {
           return ;
         }
-  
-        setLoading(true);
-  
-        castMemberHttp
-              .get(id)
-              .then(({data}) => {
-                    setCastMember(data.data)
-                    reset(data.data)
-              })
-              .finally(() => setLoading(false))
+
+        (async function getCastMember() {
+            setLoading(true);
+
+            try {
+                const {data} = await castMemberHttp.get(id);
+                setCastMember(data.data)
+                reset(data.data)
+            } catch(error) {
+                console.log(error);
+    
+                snackbar.enqueueSnackbar(
+                  'Não foi possível carregar as informações',
+                  {variant: 'error'}
+                );
+            } finally {
+                setLoading(false)
+            }
+        })()
       }, []);
 
-    function onSubmit(formData, event) {
+    async function onSubmit(formData, event) {
         setLoading(true);
 
-        const http = !castMember
-          ? castMemberHttp.create(formData)
-          : castMemberHttp.update(castMember.id, formData)
+        try {
+            const http = !castMember
+                ? castMemberHttp.create(formData)
+                : castMemberHttp.update(castMember.id, formData)
 
-          http
-            .then(({data}) => {
-              snackbar.enqueueSnackbar(
-                'Membro do elenco salvo com sucesso',
-                {variant: 'success'}
-              );
+          const {data} = await http;
+           
+          snackbar.enqueueSnackbar(
+            'Membro do elenco salvo com sucesso',
+            {variant: 'success'}
+          );
 
-              setTimeout(() => {
-                event ? (
-                  id 
-                    ? history.replace(`/cast_members/${data.data.id}/edit`)
-                    : history.push(`/cast_members/${data.data.id}/edit`)
-                )
-                : history.push('/cast_members')
-              });
-            })
-            .catch((error) => {
-              console.log(error);
-              snackbar.enqueueSnackbar(
-                'Erro ao salvar membro do elenco',
-                {variant: 'error'}
-              );
-            })
-            .finally(() => setLoading(false))
-
-        castMemberHttp
-            .create(formData)
-            .then((response) => console.log(response))
+          setTimeout(() => {
+            event ? (
+              id 
+                ? history.replace(`/cast_members/${data.data.id}/edit`)
+                : history.push(`/cast_members/${data.data.id}/edit`)
+            )
+            : history.push('/cast_members')
+          });
+        } catch(error) {
+          console.log(error);
+          snackbar.enqueueSnackbar(
+            'Erro ao salvar membro do elenco',
+            {variant: 'error'}
+          );
+        } finally {
+          setLoading(false);
+        }
     }
 
     return (
@@ -122,7 +127,7 @@ export const Form = () => {
                 helperText={errors.name && errors.name.message} 
             />
             
-            <FormControl component="fieldset" className={classes.submit}>
+            <FormControl error={errors.type !== undefined} component="fieldset" className={classes.submit}>
                 <FormLabel component="legend">Tipo</FormLabel>
                 <RadioGroup name="type" onChange={handleChange}>
                     {CastMemberTypeMap.map(data => (
@@ -140,6 +145,11 @@ export const Form = () => {
                         />
                     ))}
                 </RadioGroup>
+                {
+                    errors.type
+                        ? <FormHelperText id="type-helper-text">{errors.type.message}</FormHelperText>
+                        : null
+                }
             </FormControl>
 
             <Box dir={"rtl"}>
