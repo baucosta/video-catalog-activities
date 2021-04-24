@@ -7,6 +7,7 @@ import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
 import categoryHttp from '../../utils/http/category-http';
 import { BadgeNo, BadgeYes } from '../../components/Badge';
+import { Category, ListResponse } from '../../utils/models';
 
 const columnsDefinition: MUIDataTableColumn[] = [
     {
@@ -33,12 +34,6 @@ const columnsDefinition: MUIDataTableColumn[] = [
     },
 ];
 
-export interface Category {
-    id: string;
-    name: string;
-    is_active: boolean;
-}
-
 
 type Props = {
     
@@ -48,10 +43,17 @@ const Table = (props: Props) => {
     const [data, setData] = useState<Category[]>([]);
 
     useEffect(() => {
-        (async function geCategories() {
-            const {data} = await categoryHttp.list<{data: Category[]}>()
-            setData(data.data)
+        let isSubscribed = true;
+        (async () => {
+            const {data} = await categoryHttp.list<ListResponse<Category>>()
+            if (isSubscribed) {
+                setData(data.data)
+            }
         })()
+
+        return () => {
+            isSubscribed = false;
+        }
     }, []);
 
     return (

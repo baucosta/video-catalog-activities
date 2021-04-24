@@ -6,6 +6,8 @@ import { httpVideo } from '../../utils/http';
 import { Chip } from '@material-ui/core';
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
+import genreHttp from '../../utils/http/genre-http';
+import { Genre, ListResponse } from '../../utils/models';
 
 const columnsDefinition: MUIDataTableColumn[] = [
     {
@@ -41,12 +43,12 @@ const columnsDefinition: MUIDataTableColumn[] = [
     },
 ];
 
-export interface Genre {
-    id: string;
-    name: string;
-    is_active: boolean;
-    categories_id: string[];
-}
+// export interface Genre {
+//     id: string;
+//     name: string;
+//     is_active: boolean;
+//     categories_id: string[];
+// }
 
 
 type Props = {
@@ -54,13 +56,20 @@ type Props = {
 };
 const Table = (props: Props) => {
 
-    const [data, setData] = useState([]);
+    const [data, setData] = useState<Genre[]>([]);
 
     useEffect(() => {
-        (async function geCategories() {
-            const {data} = await httpVideo.get('genres')
-            setData(data.data)
+        let isSubscribed = true;
+        (async () => {
+            const {data} = await genreHttp.list<ListResponse<Genre>>()
+            if (isSubscribed) {
+                setData(data.data)
+            }
         })()
+
+        return () => {
+            isSubscribed = false;
+        }
     }, []);
 
     return (

@@ -5,6 +5,8 @@ import {useEffect, useState} from "react";
 import { httpVideo } from '../../utils/http';
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
+import { CastMember, ListResponse } from '../../utils/models';
+import castMemberHttp from '../../utils/http/cast-member-http';
 
 export const CastMemberTypeMap = [
     {
@@ -17,11 +19,11 @@ export const CastMemberTypeMap = [
     },
 ];
 
-export interface CastMember {
-    id: string;
-    name: string;
-    type: number;
-}
+// export interface CastMember {
+//     id: string;
+//     name: string;
+//     type: number;
+// }
 
 
 const columnsDefinition: MUIDataTableColumn[] = [
@@ -57,13 +59,20 @@ type Props = {
 };
 const Table = (props: Props) => {
 
-    const [data, setData] = useState([]);
+    const [data, setData] = useState<CastMember[]>([]);
 
     useEffect(() => {
-        (async function getCastMembers() {
-            const {data} = await httpVideo.get('cast_members')
-            setData(data.data)
+        let isSubscribed = true;
+        (async () => {
+            const {data} = await castMemberHttp.list<ListResponse<CastMember>>()
+            if (isSubscribed) {
+                setData(data.data)
+            }
         })()
+
+        return () => {
+            isSubscribed = false;
+        }
     }, []);
 
     return (

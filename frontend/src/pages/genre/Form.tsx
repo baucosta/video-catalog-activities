@@ -1,20 +1,16 @@
-import { Box, Button, Checkbox, FormControl, FormControlLabel, FormHelperText, InputLabel, makeStyles, Select, TextField, Theme} from '@material-ui/core';
-import {ButtonProps} from "@material-ui/core/Button";
+import { Checkbox, FormControl, FormControlLabel, FormHelperText, InputLabel, makeStyles, Select, TextField, Theme} from '@material-ui/core';
 import { useForm } from 'react-hook-form';
 import genreHttp from '../../utils/http/genre-http';
 import categoryHttp from '../../utils/http/category-http';
-import {Category} from '../category/Table';
 import {useEffect, useState} from "react";
 import { useHistory, useParams } from 'react-router';
 import { useSnackbar } from 'notistack';
 import *  as yup from '../../utils/vendor/yup';
-import { Genre } from './Table';
+import { Category, Genre } from '../../utils/models';
+import SubmitActions from '../../components/SubmitActions';
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
-        submit: {
-            margin: theme.spacing(1)
-        },
         formControl: {
             margin: theme.spacing(1),
         },
@@ -30,7 +26,7 @@ const validationSchema = yup.object().shape({
 export const Form = () => {
     const resolver = yup.useYupValidationResolver(validationSchema);
 
-    const {register, handleSubmit, watch, setValue, getValues, errors, reset} = useForm<Genre>({
+    const {register, handleSubmit, watch, setValue, getValues, errors, reset, trigger} = useForm<Genre>({
         resolver,
         defaultValues: {
             categories_id: [],
@@ -47,41 +43,43 @@ export const Form = () => {
     const snackbar = useSnackbar();
     const history = useHistory();
     const { id } = useParams<{ id: string }>();
-    const [genre, setGenre] = useState<{id: string} | null>(null);
+    const [genre, setGenre] = useState<Genre | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
     
-    const [data, setData] = useState<Category[]>([]);
-      
+    const [getCategories, setCategories] = useState<Category[]>([]);
+
     useEffect(() => {
         register({name: "categories_id"})
-
-        categoryHttp
-            .list<{data: Category[]}>()
-            .then(({data}) => setData(data.data))
-    }, [register]);
-
-    useEffect(() => {
         register({name: "is_active"})
     }, [register]);
 
     useEffect(() => {
-        if (!id) {
-          return ;
-        }
-  
-        (async function getGenre() {
+        let isSubscribed = true;
+        (async () => {
             setLoading(true);
     
             try {
-                const {data} = await genreHttp.get(id);
-                let genreType = data.data as Genre;
+                const promises = [categoryHttp.list()];
 
-                genreType.categories_id = [];
-                data.data.categories
-                .map(category => genreType.categories_id.push(category.id))
+                if (id) {
+                    promises.push(genreHttp.get(id));
+                }
 
-                setGenre(genreType)
-                reset(data.data)
+                const [categories, genres] = await Promise.all(promises);
+
+                if (isSubscribed) {
+                    setCategories(categories.data.data);
+                    
+                    if (id) {
+                        let genreType = genres.data.data as Genre;
+                        genreType.categories_id = [];
+                        genres.data.data.categories
+                        .map(category => genreType.categories_id.push(category.id))
+                        
+                        setGenre(genreType)
+                        reset(genres.data.data)
+                    }
+                }
             } catch(error) {
                 console.log(error);
     
@@ -93,16 +91,11 @@ export const Form = () => {
                 setLoading(false)
             }
         })()
+
+        return () => {
+            isSubscribed = false;
+        }
     }, []);
-
-
-    const buttonProps: ButtonProps = {
-        className: classes.submit,
-        variant: "contained",
-        color: 'secondary',
-        disabled: loading
-      }
-
     
 
     const handleChangeMultiple = (event: React.ChangeEvent<{ value: unknown }>) => {
@@ -179,7 +172,7 @@ export const Form = () => {
                         id: 'select-multiple-native',
                     }}
                 >
-                {data.map((category: Category) => (
+                {getCategories.map((category: Category) => (
                     <option 
                         key={category.id} 
                         value={category.id}
@@ -212,10 +205,16 @@ export const Form = () => {
                 labelPlacement={'end'}
             />
 
-            <Box dir={"rtl"}>
-                <Button {...buttonProps} type="submit">Salvar e continuar editando</Button>
-                <Button {...buttonProps} onClick={() => onSubmit(getValues(), null)}>Salvar</Button>
-            </Box>
+            <SubmitActions 
+                disabledButtons={loading} 
+                handleSave={() => 
+                    trigger().then(isValid => {
+                        isValid && onSubmit(getValues(), null);
+                    })
+                }
+            >
+
+            </SubmitActions>
         </form>
     );
 };
