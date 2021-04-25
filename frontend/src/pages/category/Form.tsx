@@ -1,5 +1,5 @@
 // @flow 
-import { Checkbox, FormControlLabel, makeStyles, TextField, Theme } from '@material-ui/core';
+import { Checkbox, FormControlLabel, Grid, makeStyles, TextField, Theme } from '@material-ui/core';
 import React, { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
 import categoryHttp from '../../utils/http/category-http';
@@ -8,6 +8,7 @@ import { useHistory, useParams } from 'react-router';
 import { useSnackbar } from 'notistack';
 import { Category } from '../../utils/models';
 import SubmitActions from '../../components/SubmitActions';
+import { DefaultForm } from '../../components/DefaultForm';
 
 const useStyles = makeStyles((theme: Theme) => {
     return {
@@ -111,7 +112,7 @@ export const Form = () => {
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <DefaultForm GridItemProps={{xs: 12, md: 6}} onSubmit={handleSubmit(onSubmit)}>
             <TextField
                 name="name"
                 label="Nome"
@@ -162,6 +163,6 @@ export const Form = () => {
                 }
             >
             </SubmitActions>
-        </form>
+        </DefaultForm>
     );
 };
