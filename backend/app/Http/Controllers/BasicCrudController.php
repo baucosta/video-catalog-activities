@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\CategoryResource;
+use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 
@@ -18,15 +19,16 @@ abstract class BasicCrudController extends Controller
 
     public function index()
     {
-        $data = !$this->paginationSize ? $this->model()::all() : $this->model()::paginate($this->paginationSize);
+        return Category::filter(\Request::all())->get();
+        // $data = !$this->paginationSize ? $this->model()::all() : $this->model()::paginate($this->paginationSize);
 
-        $resourceCollectionClass = $this->resourceCollection();
+        // $resourceCollectionClass = $this->resourceCollection();
 
-        $refClass = new \ReflectionClass($this->resourceCollection());
+        // $refClass = new \ReflectionClass($this->resourceCollection());
 
-        return $refClass->isSubclassOf(ResourceCollection::class)
-            ? new $resourceCollectionClass($data)
-            : $resourceCollectionClass::collection($data);
+        // return $refClass->isSubclassOf(ResourceCollection::class)
+        //     ? new $resourceCollectionClass($data)
+        //     : $resourceCollectionClass::collection($data);
 
 
     }

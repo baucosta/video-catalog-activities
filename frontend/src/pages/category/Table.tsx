@@ -7,12 +7,22 @@ import parseISO from "date-fns/parseISO";
 import categoryHttp from '../../utils/http/category-http';
 import { BadgeNo, BadgeYes } from '../../components/Badge';
 import { Category, ListResponse } from '../../utils/models';
-import DefaultTable from '../../components/Table';
+import DefaultTable, {TableColumn} from '../../components/Table';
+import { useSnackbar } from 'notistack';
 
-const columnsDefinition: MUIDataTableColumn[] = [
+const columnsDefinition: TableColumn[] = [
+    {
+        name: "id",
+        label: "ID",
+        width: "30%",
+        options: {
+            sort: false
+        }
+    },
     {
         name: "name",
         label: "Nome",
+        width: "43%",
     },
     {
         name: "is_active",
@@ -21,7 +31,8 @@ const columnsDefinition: MUIDataTableColumn[] = [
             customBodyRender(value, tableMeta, updateValue) {
                 return value ? <BadgeYes/> : <BadgeNo/>;
             }
-        }
+        },
+        width: "4%",
     },
     {
         name: "created_at",
@@ -30,7 +41,13 @@ const columnsDefinition: MUIDataTableColumn[] = [
             customBodyRender(value, tableMeta, updateValue) {
                 return <span>{format(parseISO(value), 'dd/MM/yyyy')}</span>
             }
-        }
+        },
+        width: "10%",
+    },
+    {
+        name: "actions",
+        label: "Ações",
+        width: "13%",
     },
 ];
 
@@ -40,14 +57,27 @@ type Props = {
 };
 const Table = (props: Props) => {
 
+    const snackbar = useSnackbar();
     const [data, setData] = useState<Category[]>([]);
+    const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
         let isSubscribed = true;
         (async () => {
-            const {data} = await categoryHttp.list<ListResponse<Category>>()
-            if (isSubscribed) {
-                setData(data.data)
+            try {
+                setLoading(true);
+                const {data} = await categoryHttp.list<ListResponse<Category>>()
+                if (isSubscribed) {
+                    setData(data.data)
+                }
+            } catch(error) {
+                snackbar.enqueueSnackbar(
+                    'Não foi possível carregar as informações',
+                    {variant: 'error'}
+                  );
+
+            } finally {
+                setLoading(false);
             }
         })()
 
@@ -60,7 +90,9 @@ const Table = (props: Props) => {
         <DefaultTable 
             title="Listagem de categorias"
             columns={columnsDefinition} 
-            data={data} />
+            data={data}
+            loading={loading}
+            options={{responsive: "simple"}} />
     );
 };
 
