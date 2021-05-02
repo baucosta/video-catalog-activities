@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use EloquentFilter\Filterable;
 
 abstract class BasicCrudController extends Controller
 {
-    private $paginationSize = 15;
+    private $defaultPerPage = 15;
 
     protected abstract function model();
     protected abstract function rulesStore();
@@ -17,18 +19,25 @@ abstract class BasicCrudController extends Controller
     protected abstract function resource();
     protected abstract function resourceCollection();
 
-    public function index()
+    public function index(Request $request)
     {
-        return Category::filter(\Request::all())->get();
-        // $data = !$this->paginationSize ? $this->model()::all() : $this->model()::paginate($this->paginationSize);
 
-        // $resourceCollectionClass = $this->resourceCollection();
+        $defaultPerPage = (int) $request->get('per_page', $this->defaultPerPage);
+        $hasFilter = in_array(Filterable::class, class_uses($this->model()));
 
-        // $refClass = new \ReflectionClass($this->resourceCollection());
+        $query = $this->queryBuilder();
 
-        // return $refClass->isSubclassOf(ResourceCollection::class)
-        //     ? new $resourceCollectionClass($data)
-        //     : $resourceCollectionClass::collection($data);
+        if ($hasFilter) {
+            $query = $query->filter($request->all());
+        }
+
+        $data = $request->has('all') || !$this->defaultPerPage ? $query->get() : $query->paginate($defaultPerPage);
+
+        $resourceCollectionClass = $this->resourceCollection();
+        $refClass = new \ReflectionClass($this->resourceCollection());
+        return $refClass->isSubclassOf(ResourceCollection::class)
+            ? new $resourceCollectionClass($data)
+            : $resourceCollectionClass::collection($data);
 
 
     }
@@ -36,7 +45,7 @@ abstract class BasicCrudController extends Controller
     public function store(Request $request)
     {
         $validateData = $this->validate($request, $this->rulesStore());
-        $obj = $this->model()::create($validateData);
+        $obj = $this->queryBuilder()->create($validateData);
         $obj->refresh();
 
         $resource = $this->resource();
@@ -53,7 +62,7 @@ abstract class BasicCrudController extends Controller
     protected function findOrFail($id) {
         $model = $this->model();
         $keyName = (new $model)->getRouteKeyName();
-        return $this->model()::where($keyName, $id)->firstOrFail();
+        return $this->queryBuilder()->where($keyName, $id)->firstOrFail();
     }
 
     public function update(Request $request, $id)
@@ -71,5 +80,9 @@ abstract class BasicCrudController extends Controller
         $obj = $this->findOrFail($id);
         $obj->delete();
         return response()->noContent();
+    }
+
+    protected function queryBuilder(): Builder {
+        return $this->model()::query();
     }
 }

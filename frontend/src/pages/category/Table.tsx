@@ -1,14 +1,16 @@
 // @flow 
 import * as React from 'react';
-import {MUIDataTableColumn} from 'mui-datatables';
 import {useEffect, useState} from "react";
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
 import categoryHttp from '../../utils/http/category-http';
 import { BadgeNo, BadgeYes } from '../../components/Badge';
 import { Category, ListResponse } from '../../utils/models';
-import DefaultTable, {TableColumn} from '../../components/Table';
+import DefaultTable, {TableColumn, makeActionStyles} from '../../components/Table';
 import { useSnackbar } from 'notistack';
+import { IconButton, MuiThemeProvider, Theme } from '@material-ui/core';
+import { Link } from 'react-router-dom';
+import EditIcon from '@material-ui/icons/Edit';
 
 const columnsDefinition: TableColumn[] = [
     {
@@ -48,14 +50,25 @@ const columnsDefinition: TableColumn[] = [
         name: "actions",
         label: "Ações",
         width: "13%",
+        options: {
+            sort: false,
+            customBodyRender(value, tableMeta) {
+                return (
+                    <IconButton
+                        color={'secondary'}
+                        component={Link}
+                        to={`/categories/${tableMeta.rowData[0]}/edit`}
+                    >
+                        <EditIcon fontSize={'inherit'} />
+                    </IconButton>
+                )
+            }
+        },
     },
 ];
 
 
-type Props = {
-    
-};
-const Table = (props: Props) => {
+const Table = () => {
 
     const snackbar = useSnackbar();
     const [data, setData] = useState<Category[]>([]);
@@ -87,12 +100,14 @@ const Table = (props: Props) => {
     }, []);
 
     return (
-        <DefaultTable 
-            title="Listagem de categorias"
-            columns={columnsDefinition} 
-            data={data}
-            loading={loading}
-            options={{responsive: "simple"}} />
+        <MuiThemeProvider theme={makeActionStyles(columnsDefinition.length - 1)}>
+            <DefaultTable 
+                title="Listagem de categorias"
+                columns={columnsDefinition} 
+                data={data}
+                loading={loading}
+                options={{responsive: "simple"}} />
+        </MuiThemeProvider>
     );
 };
 
