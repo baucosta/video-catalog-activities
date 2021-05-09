@@ -4,99 +4,96 @@ import TextField from '@material-ui/core/TextField';
 import SearchIcon from '@material-ui/icons/Search';
 import IconButton from '@material-ui/core/IconButton';
 import ClearIcon from '@material-ui/icons/Clear';
-import { makeStyles } from '@material-ui/core/styles';
-import {debounce} from 'lodash';
+import { withStyles } from '@material-ui/core/styles';
+import {debounce} from "lodash";
 
-const useStyles = makeStyles(
-  theme => ({
-    main: {
-      display: 'flex',
-      flex: '1 0 auto',
+const defaultSearchStyles = theme => ({
+  main: {
+    display: 'flex',
+    flex: '1 0 auto',
+  },
+  searchIcon: {
+    color: theme.palette.text.secondary,
+    marginTop: '10px',
+    marginRight: '8px',
+  },
+  searchText: {
+    flex: '0.8 0',
+  },
+  clearIcon: {
+    '&:hover': {
+      color: theme.palette.error.main,
     },
-    searchIcon: {
-      color: theme.palette.text.secondary,
-      marginTop: '10px',
-      marginRight: '8px',
-    },
-    searchText: {
-      flex: '0.8 0',
-    },
-    clearIcon: {
-      '&:hover': {
-        color: theme.palette.error.main,
-      },
-    },
-  }),
-  { name: 'MUIDataTableSearch' },
-);
+  },
+});
 
-const DebouncedTableSearch = ({ options, searchText, onSearch, onHide }) => {
-
-    // constructor(props) {
-    //     super(props);
-    //     this.state = {
-    //         text: props.searchText
-    //     }
-    //      this.dispatchOnSearch = debounce(this.dispatchOnSearch.bind(this), 500);
-    // }
-        
-    this.state = {
-        text: searchText
+class DebouncedTableSearch extends React.Component {
+     constructor(props) {
+        super(props);
+        this.state = {
+            text: props.searchText
+        }
+         this.dispatchOnSearch = debounce(this.dispatchOnSearch.bind(this), this.props.debounceTime);
     }
-
-    this.dispatchOnSearch = debounce(this.dispatchOnSearch.bind(this), 500);
-
-    const classes = useStyles();
-
-    const handleTextChange = event => {
+    
+ 
+    handleTextChange = event => {
         const value = event.target.value;
-
         this.setState({
             text: value
         }, () => this.dispatchOnSearch(value));
     };
 
-    this.dispatchOnSearch = value => {
-        onSearch(value)
+    dispatchOnSearch = value =>  {
+      this.props.onSearch(value);
     }
 
-    const onKeyDown = event => {
-        if (event.key === 'Escape') {
-        onHide();
-        }
+    componentDidMount() {
+      document.addEventListener('keydown', this.onKeyDown, false);
+    }
+
+    componentWillUnmount() {
+      document.removeEventListener('keydown', this.onKeyDown, false);
+    }
+
+    onKeyDown = event => {
+      if (event.keyCode === 27) {
+        this.props.onHide();
+      }
     };
 
-    let value = this.state.text;
-    if (searchText && searchText.value !== undefined) {
-        value = searchText.value;
-    }
+    render() {
+      const { classes, options, onHide, searchText } = this.props;
 
-    return (
+      let value = this.state.text;
+      if (searchText && searchText.value !== undefined) {
+          value = searchText.value;
+      }
+
+      return (
         <Grow appear in={true} timeout={300}>
-        <div className={classes.main}>
+          <div className={classes.main} ref={el => (this.rootRef = el)}>
             <SearchIcon className={classes.searchIcon} />
             <TextField
-            className={classes.searchText}
-            autoFocus={true}
-            InputProps={{
+              className={classes.searchText}
+              autoFocus={true}
+              InputProps={{
                 'data-test-id': options.textLabels.toolbar.search,
-            }}
-            inputProps={{
                 'aria-label': options.textLabels.toolbar.search,
-            }}
-            value={value || ''}
-            onKeyDown={onKeyDown}
-            onChange={handleTextChange}
-            fullWidth={true}
-            placeholder={options.searchPlaceholder}
-            {...(options.searchProps ? options.searchProps : {})}
+              }}
+              value={value || ''}
+              onChange={this.handleTextChange}
+              fullWidth={true}
+              inputRef={el => (this.searchField = el)}
+              placeholder={options.searchPlaceholder}
             />
             <IconButton className={classes.clearIcon} onClick={onHide}>
-            <ClearIcon />
+              <ClearIcon />
             </IconButton>
-        </div>
+          </div>
         </Grow>
-    );
-};
+      );
+    }
+}
 
-export default DebouncedTableSearch;
+export default withStyles(defaultSearchStyles, { name: 'MUIDataTableSearch' })(DebouncedTableSearch);
