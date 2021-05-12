@@ -77,6 +77,7 @@ const Table = () => {
     const [data, setData] = useState<Category[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [searchState, dispatch] = useReducer(reducer, INITIAL_STATE);
+    const [totalRecords, setTotalRecords] = useState<number>(0);
     // const [searchState, setSearchState] = useState<SearchState>(initialState);
 
     const columns = columnsDefinition.map(column => {
@@ -122,6 +123,7 @@ const Table = () => {
             })
             if (subscribed.current) {
                 setData(data.data);
+                setTotalRecords(data.meta.total);
                 // setSearchState((prevState => (
                 //     {
                 //         ...prevState,
@@ -170,12 +172,10 @@ const Table = () => {
                     searchText: searchState.search as any,
                     page: searchState.pagination.page-1,
                     rowsPerPage: searchState.pagination.per_page,
-                    count: searchState.pagination.total,
+                    count: totalRecords,
                     customToolbar: () => (
                         <FilterResetButton 
-                            handleClick={() => {
-                                /*dispatch({type: 'reset'})*/
-                            }}
+                            handleClick={() => dispatch(Creators.setReset())}
                         />
                     ),
                     onSearchChange: (value) => dispatch(Creators.setSearch({search: value as any})),
