@@ -178,7 +178,7 @@ const Table = () => {
                             handleClick={() => dispatch(Creators.setReset())}
                         />
                     ),
-                    onSearchChange: (value) => dispatch(Creators.setSearch({search: value as any})),
+                    onSearchChange: (value) => dispatch(Creators.setSearch({search: value})),
                     onChangePage: (page) =>  dispatch(Creators.setPage({page: page + 1})),
                     onChangeRowsPerPage: (perPage) => dispatch(Creators.setPerPage({perPage: perPage + 1})),
                     onColumnSortChange: (changedColumn: string, direction: 'asc' | 'desc') => 
