@@ -13,7 +13,8 @@ import { Link } from 'react-router-dom';
 import EditIcon from '@material-ui/icons/Edit';
 import { FilterResetButton } from '../../components/Table/FilterResetButton';
 import Breadcrumbs from '../../components/Breadcrumbs';
-import reducer, { Creators, INITIAL_STATE } from '../../store/search';
+import reducer, { Creators, INITIAL_STATE } from '../../store/filter';
+import useFilter from '../../hooks/useFilter';
 
 const columnsDefinition: TableColumn[] = [
     {
@@ -76,19 +77,18 @@ const Table = () => {
     const subscribed = useRef(true);
     const [data, setData] = useState<Category[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
-    const [searchState, dispatch] = useReducer(reducer, INITIAL_STATE);
-    const [totalRecords, setTotalRecords] = useState<number>(0);
-    // const [searchState, setSearchState] = useState<SearchState>(initialState);
-
-    const columns = columnsDefinition.map(column => {
-        return column.name === searchState.order.sort
-        ? {
-            ...column,
-            options: {
-                ...column.options,
-                sortDirection: searchState.order.dir as any
-            }
-        } : column;
+    const {
+        columns,
+        filterManager,
+        filterState,
+        dispatch,
+        totalRecords,
+        setTotalRecords
+    } = useFilter({
+        columns: columnsDefinition,
+        debounceTime: 500,
+        rowsPerPage: 10,
+        rowsPerPageOptions: [10, 25, 50]
     });
 
     useEffect(() => {
@@ -103,10 +103,10 @@ const Table = () => {
             subscribed.current = false;
         }
     }, [
-        searchState.search, 
-        searchState.pagination.page, 
-        searchState.pagination.per_page,
-        searchState.order,
+        filterState.search, 
+        filterState.pagination.page, 
+        filterState.pagination.per_page,
+        filterState.order,
     ]);
 
     async function getData() {
@@ -114,17 +114,17 @@ const Table = () => {
         try {
             const {data} = await categoryHttp.list<ListResponse<Category>>({
                 queryParams: {
-                    search: cleanSearchText(searchState.search),
-                    page: searchState.pagination.page,
-                    per_page: searchState.pagination.per_page,
-                    sort: searchState.order.sort,
-                    dir: searchState.order.dir,
+                    search: cleanSearchText(filterState.search),
+                    page: filterState.pagination.page,
+                    per_page: filterState.pagination.per_page,
+                    sort: filterState.order.sort,
+                    dir: filterState.order.dir,
                 }
             })
             if (subscribed.current) {
                 setData(data.data);
                 setTotalRecords(data.meta.total);
-                // setSearchState((prevState => (
+                // setfilterState((prevState => (
                 //     {
                 //         ...prevState,
                 //         pagination: {
@@ -169,23 +169,20 @@ const Table = () => {
                 options={{
                     serverSide: true,
                     responsive: "simple",
-                    searchText: searchState.search as any,
-                    page: searchState.pagination.page-1,
-                    rowsPerPage: searchState.pagination.per_page,
+                    searchText: filterState.search as any,
+                    page: filterState.pagination.page-1,
+                    rowsPerPage: filterState.pagination.per_page,
                     count: totalRecords,
                     customToolbar: () => (
                         <FilterResetButton 
                             handleClick={() => dispatch(Creators.setReset())}
                         />
                     ),
-                    onSearchChange: (value) => dispatch(Creators.setSearch({search: value})),
-                    onChangePage: (page) =>  dispatch(Creators.setPage({page: page + 1})),
-                    onChangeRowsPerPage: (perPage) => dispatch(Creators.setPerPage({perPage: perPage + 1})),
+                    onSearchChange: (value) => filterManager.changeSearch(value),
+                    onChangePage: (page) =>  filterManager.changePage(page),
+                    onChangeRowsPerPage: (perPage) => filterManager.changeRowsPerPage(perPage),
                     onColumnSortChange: (changedColumn: string, direction: 'asc' | 'desc') => 
-                        dispatch(Creators.setOrder({
-                            sort: changedColumn,
-                            dir: direction.includes('desc') ? 'desc ' : 'asc',
-                        })),
+                        filterManager.columnSortChange(changedColumn, direction)
                 }} 
             />
         </MuiThemeProvider>
