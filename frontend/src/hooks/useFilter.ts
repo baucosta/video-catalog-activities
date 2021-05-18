@@ -3,16 +3,23 @@ import { Actions as FilterActions, State as FilterState } from '../store/filter/
 import {useState, useReducer, Dispatch, Reducer} from "react";
 import reducer, { Creators, INITIAL_STATE } from '../store/filter';
 import {useDebounce} from 'use-debounce';
+import { useHistory } from 'react-router';
+import {History} from 'history';
 
 interface FilterManagerOptions {
     columns: MUIDataTableColumn[];
     rowsPerPage: number;
     rowsPerPageOptions: number[];
     debounceTime: number;
+    history: History;
 }
 
-export default function useFilter(options: FilterManagerOptions) {
-    const filterManager = new FilterManager(options);
+interface UseFilterOptions extends Omit<FilterManagerOptions, 'history'>{
+}
+
+export default function useFilter(options: UseFilterOptions) {
+    const history = useHistory()
+    const filterManager = new FilterManager({...options, history});
     const [filterState, dispatch] = useReducer<Reducer<FilterState, FilterActions>>(reducer, INITIAL_STATE);
     const [debouncedFilterState] = useDebounce(filterState, options.debounceTime);
     const [totalRecords, setTotalRecords] = useState<number>(0);
@@ -38,13 +45,15 @@ export class FilterManager {
     columns: MUIDataTableColumn[];
     rowsPerPage: number;
     rowsPerPageOptions: number[];
+    history: History;
 
     constructor(options: FilterManagerOptions) {
-        const {columns, rowsPerPage, rowsPerPageOptions, debounceTime} = options;
+        const {columns, rowsPerPage, rowsPerPageOptions, history} = options;
 
         this.columns = columns;
         this.rowsPerPage = rowsPerPage;
         this.rowsPerPageOptions = rowsPerPageOptions;
+        this.history = history;
 
     }
 
@@ -88,5 +97,17 @@ export class FilterManager {
         }
 
         return newText;
+    }
+
+    pushHistory() {
+        const newLocation = {
+            pathname: '',
+            search: '',
+            state: {
+                
+            }
+        };
+
+        this.history.push(newLocation);
     }
 }
