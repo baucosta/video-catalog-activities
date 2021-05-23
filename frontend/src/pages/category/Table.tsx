@@ -1,6 +1,6 @@
 // @flow 
 import * as React from 'react';
-import {useEffect, useState, useRef, useReducer} from "react";
+import {useEffect, useState, useRef} from "react";
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
 import categoryHttp from '../../utils/http/category-http';
@@ -8,12 +8,11 @@ import { BadgeNo, BadgeYes } from '../../components/Badge';
 import { Category, ListResponse } from '../../utils/models';
 import DefaultTable, {TableColumn, makeActionStyles} from '../../components/Table';
 import { useSnackbar } from 'notistack';
-import { IconButton, MuiThemeProvider, Theme } from '@material-ui/core';
+import { IconButton, MuiThemeProvider } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import EditIcon from '@material-ui/icons/Edit';
 import { FilterResetButton } from '../../components/Table/FilterResetButton';
-import Breadcrumbs from '../../components/Breadcrumbs';
-import reducer, { Creators, INITIAL_STATE } from '../../store/filter';
+import reducer, { Creators } from '../../store/filter';
 import useFilter from '../../hooks/useFilter';
 
 const columnsDefinition: TableColumn[] = [

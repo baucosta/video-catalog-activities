@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\ModelFilters\GenreFilter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use EloquentFilter\Filterable;
 
 class Genre extends Model
 {
-    use SoftDeletes, \App\Models\Traits\Uuid;
+    use SoftDeletes, \App\Models\Traits\Uuid, Filterable;
 
     protected $fillable = ['name', 'is_active'];
     protected $dates = ['deleted_at'];
@@ -19,5 +21,9 @@ class Genre extends Model
 
     public function categories() {
         return $this->belongsToMany(Category::class)->withoutTrashed();
+    }
+
+    public function modelFilter() {
+        return $this->provideFilter(GenreFilter::class);
     }
 }
