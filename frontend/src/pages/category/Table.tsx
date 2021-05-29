@@ -6,7 +6,7 @@ import parseISO from "date-fns/parseISO";
 import categoryHttp from '../../utils/http/category-http';
 import { BadgeNo, BadgeYes } from '../../components/Badge';
 import { Category, ListResponse } from '../../utils/models';
-import DefaultTable, {TableColumn, makeActionStyles} from '../../components/Table';
+import DefaultTable, {TableColumn, makeActionStyles, MuiDataTableRefComponent} from '../../components/Table';
 import { useSnackbar } from 'notistack';
 import { IconButton, MuiThemeProvider } from '@material-ui/core';
 import { Link } from 'react-router-dom';
@@ -80,6 +80,8 @@ const Table = () => {
     const subscribed = useRef(true);
     const [data, setData] = useState<Category[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const tableRef = useRef() as React.MutableRefObject<MuiDataTableRefComponent>;
+
     const {
         columns,
         filterManager,
@@ -92,7 +94,8 @@ const Table = () => {
         columns: columnsDefinition,
         debounceTime: debounceTime,
         rowsPerPage,
-        rowsPerPageOptions
+        rowsPerPageOptions,
+        tableRef
     });
 
     useEffect(() => {
@@ -157,6 +160,7 @@ const Table = () => {
                 data={data}
                 loading={loading}
                 debouncedSearchTime={debouncedSearchTime}
+                ref={tableRef}
                 options={{
                     serverSide: true,
                     responsive: "simple",
@@ -167,7 +171,7 @@ const Table = () => {
                     count: totalRecords,
                     customToolbar: () => (
                         <FilterResetButton 
-                            handleClick={() => dispatch(Creators.setReset())}
+                            handleClick={() => filterManager.resetFilter()}
                         />
                     ),
                     onSearchChange: (value) => filterManager.changeSearch(value),
