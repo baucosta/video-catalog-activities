@@ -3,7 +3,7 @@ import * as React from 'react';
 import {useEffect, useState, useRef} from "react";
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
-import { CastMember, ListResponse } from '../../utils/models';
+import { CastMember, ListResponse, CastMemberTypeMap } from '../../utils/models';
 import castMemberHttp from '../../utils/http/cast-member-http';
 import DefaultTable, {TableColumn, makeActionStyles, MuiDataTableRefComponent} from '../../components/Table';
 import { useSnackbar } from 'notistack';
@@ -13,17 +13,9 @@ import { FilterResetButton } from '../../components/Table/FilterResetButton';
 import { Creators } from '../../store/filter';
 import { Link } from 'react-router-dom';
 import EditIcon from '@material-ui/icons/Edit';
+import *  as yup from '../../utils/vendor/yup';
 
-export const CastMemberTypeMap = [
-    {
-        value: 1,
-        description: 'Diretor',
-    },
-    {
-        value: 2,
-        description: 'Ator',
-    },
-];
+const castMemberNames = Object.values(CastMemberTypeMap);
 
 // export interface CastMember {
 //     id: string;
@@ -115,7 +107,32 @@ const Table = () => {
         debounceTime: debounceTime,
         rowsPerPage,
         rowsPerPageOptions,
-        tableRef
+        tableRef,
+        extraFilter: {
+            createValidationSchema: () => {
+                return yup.object().shape({
+                    type: yup.string()
+                        .nullable()
+                        .transform(value => {
+                            return !value || !castMemberNames.includes(value) ? undefined : value;
+                        })
+                        .default(null)
+                })
+            },
+            formatSearchParam: (debouncedState) => {
+                return debouncedState.extraFilter ? {
+                    ...(
+                        debouncedState.extraFilter.type && 
+                        {type: debouncedState.extraFilter.type}
+                    )
+                } : undefined
+            },
+            getStateFromURL: (queryParams) => {
+                return {
+                    type: queryParams.get('type')
+                }
+            }
+        }
     });
 
     useEffect(() => {

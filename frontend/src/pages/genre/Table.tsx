@@ -15,6 +15,7 @@ import { useSnackbar } from 'notistack';
 import useFilter from '../../hooks/useFilter';
 import { FilterResetButton } from '../../components/Table/FilterResetButton';
 import reducer, { Creators } from '../../store/filter';
+import *  as yup from '../../utils/vendor/yup';
 
 const columnsDefinition: TableColumn[] = [
     {
@@ -114,7 +115,32 @@ const Table = () => {
         debounceTime: debounceTime,
         rowsPerPage,
         rowsPerPageOptions,
-        tableRef
+        tableRef,
+        extraFilter: {
+            createValidationSchema: () => {
+                return yup.object().shape({
+                    categories: yup.mixed()
+                        .nullable()
+                        .transform(value => {
+                            return !value || value === '' ? undefined : value.split(',');
+                        })
+                        .default(null)
+                })
+            },
+            formatSearchParam: (debouncedState) => {
+                return debouncedState.extraFilter ? {
+                    ...(
+                        debouncedState.extraFilter.categories && 
+                        {categories: debouncedState.extraFilter.categories.join(',')}
+                    )
+                } : undefined
+            },
+            getStateFromURL: (queryParams) => {
+                return {
+                    categories: queryParams.get('categories')
+                }
+            }
+        }
     });
 
     useEffect(() => {

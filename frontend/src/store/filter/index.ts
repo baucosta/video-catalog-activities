@@ -103,7 +103,7 @@ function setReset(state = INITIAL_STATE, action: Typings.SetResetAction) {
 
 function updateExtraFilter(state = INITIAL_STATE, action: Typings.UpdateExtraFilterAction) {
     return {
-        ...INITIAL_STATE,
+        ...state,
         extraFilter: {
             ...state.extraFilter,
             ...action.payload
