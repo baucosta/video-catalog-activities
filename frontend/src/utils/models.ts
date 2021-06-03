@@ -38,11 +38,11 @@ export interface CastMember extends Timestampable {
 
 export const CastMemberTypeMap = [
     {
-        value: 1,
+        type: 1,
         description: 'Diretor',
     },
     {
-        value: 2,
+        type: 2,
         description: 'Ator',
     },
 ];

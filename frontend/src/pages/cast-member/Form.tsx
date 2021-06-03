@@ -4,12 +4,11 @@ import * as React from 'react';
 import {ButtonProps} from "@material-ui/core/Button";
 import { useForm } from 'react-hook-form';
 import castMemberHttp from '../../utils/http/cast-member-http';
-import {CastMemberTypeMap} from './Table';
 import {useEffect, useState} from "react";
 import *  as yup from '../../utils/vendor/yup';
 import { useHistory, useParams } from 'react-router';
 import { useSnackbar } from 'notistack';
-import { CastMember } from '../../utils/models';
+import { CastMember, CastMemberTypeMap } from '../../utils/models';
 import SubmitActions from '../../components/SubmitActions';
 import { DefaultForm } from '../../components/DefaultForm';
 
@@ -129,13 +128,13 @@ export const Form = () => {
                     {CastMemberTypeMap.map(data => (
                         <FormControlLabel 
                             label={data.description} 
-                            key={data.value}
-                            value={data.value.toString()} 
+                            key={data.type}
+                            value={data.type.toString()} 
                             disabled={loading}
                             control={
                                 <Radio 
                                     color={"primary"} 
-                                    checked={watch('type') == data.value}
+                                    checked={watch('type') == data.type}
                                 />
                             } 
                         />

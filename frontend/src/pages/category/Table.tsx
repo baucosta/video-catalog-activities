@@ -12,7 +12,6 @@ import { IconButton, MuiThemeProvider } from '@material-ui/core';
 import { Link } from 'react-router-dom';
 import EditIcon from '@material-ui/icons/Edit';
 import { FilterResetButton } from '../../components/Table/FilterResetButton';
-import reducer, { Creators } from '../../store/filter';
 import useFilter from '../../hooks/useFilter';
 
 const columnsDefinition: TableColumn[] = [
@@ -21,18 +20,25 @@ const columnsDefinition: TableColumn[] = [
         label: "ID",
         width: "30%",
         options: {
-            sort: false
+            sort: false,
+            filter: false
         },
     },
     {
         name: "name",
         label: "Nome",
         width: "43%",
+        options: {
+            filter: false
+        },
     },
     {
         name: "is_active",
         label: "Ativo?",
         options: {
+            filterOptions: {
+                names: ['Sim', 'Não']
+            },
             customBodyRender(value, tableMeta, updateValue) {
                 return value ? <BadgeYes/> : <BadgeNo/>;
             }
@@ -43,6 +49,7 @@ const columnsDefinition: TableColumn[] = [
         name: "created_at",
         label: "Criado em",
         options: {
+            filter: false,
             customBodyRender(value, tableMeta, updateValue) {
                 return <span>{format(parseISO(value), 'dd/MM/yyyy')}</span>
             }
@@ -55,6 +62,7 @@ const columnsDefinition: TableColumn[] = [
         width: "13%",
         options: {
             sort: false,
+            filter: false,
             customBodyRender(value, tableMeta) {
                 return (
                     <IconButton

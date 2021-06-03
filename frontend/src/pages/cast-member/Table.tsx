@@ -14,8 +14,9 @@ import { Creators } from '../../store/filter';
 import { Link } from 'react-router-dom';
 import EditIcon from '@material-ui/icons/Edit';
 import *  as yup from '../../utils/vendor/yup';
+import { invert } from 'lodash';
 
-const castMemberNames = Object.values(CastMemberTypeMap);
+const castMemberNames = CastMemberTypeMap.map(v => v.description);
 
 // export interface CastMember {
 //     id: string;
@@ -30,23 +31,30 @@ const columnsDefinition: TableColumn[] = [
         label: "ID",
         width: "24%",
         options: {
-            sort: false
+            sort: false,
+            filter: false
         },
     },
     {
         name: "name",
         label: "Nome",
         width: "43%",
+        options: {
+            filter: false
+        },
     },
     {
         name: "type",
         label: "Tipo",
         options: {
+            filterOptions: {
+               names: castMemberNames
+            },
             customBodyRender(value, tableMeta, updateValue) {
                 return CastMemberTypeMap
-                .filter(resp => resp.value === value)
+                .filter(resp => resp.type === value)
                 .map(resp => resp.description);
-            }
+            },
         },
         width: "10%",
     },
@@ -54,6 +62,7 @@ const columnsDefinition: TableColumn[] = [
         name: "created_at",
         label: "Criado em",
         options: {
+            filter: false,
             customBodyRender(value, tableMeta, updateValue) {
                 return <span>{format(parseISO(value), 'dd/MM/yyyy')}</span>
             }
@@ -66,6 +75,7 @@ const columnsDefinition: TableColumn[] = [
         width: "13%",
         options: {
             sort: false,
+            filter: false,
             customBodyRender(value, tableMeta) {
                 return (
                     <IconButton
@@ -135,6 +145,16 @@ const Table = () => {
         }
     });
 
+    const indexColumnType = columns.findIndex(c => c.name === 'type');
+    const columnType = columns[indexColumnType];
+    const typeFilterValue = filterState.extraFilter && filterState.extraFilter.type as never;
+    (columnType.options as any).filterList = typeFilterValue ? [typeFilterValue] : []
+
+    const serverSideFilterList = columns.map(column => []);
+    if (typeFilterValue) {
+        serverSideFilterList[indexColumnType] = [typeFilterValue];
+    }
+
     useEffect(() => {
         subscribed.current = true;
         filterManager.pushHistory();
@@ -148,6 +168,7 @@ const Table = () => {
         debouncedFilterState.pagination.page, 
         debouncedFilterState.pagination.per_page,
         debouncedFilterState.order,
+        JSON.stringify(debouncedFilterState.extraFilter)
     ]);
 
     async function getData() {
@@ -160,20 +181,16 @@ const Table = () => {
                     per_page: filterState.pagination.per_page,
                     sort: filterState.order.sort,
                     dir: filterState.order.dir,
+                    ...(
+                        debouncedFilterState.extraFilter &&
+                        debouncedFilterState.extraFilter.type &&
+                        {type: invert(CastMemberTypeMap)[debouncedFilterState.extraFilter.type]}
+                    )
                 }
             })
             if (subscribed.current) {
                 setData(data.data);
                 setTotalRecords(data.meta.total);
-                // setfilterState((prevState => (
-                //     {
-                //         ...prevState,
-                //         pagination: {
-                //             ...prevState.pagination,
-                //             total: data.meta.total
-                //         }
-                //     }
-                // )))
             }
         } catch(error) {
             if (castMemberHttp.isCancelledRequest(error)) {
@@ -214,12 +231,19 @@ const Table = () => {
                 ref={tableRef}
                 options={{
                     serverSide: true,
+                    // serverSideFilterList,
                     responsive: "simple",
                     searchText: filterState.search as any,
                     page: filterState.pagination.page-1,
                     rowsPerPage: filterState.pagination.per_page,
                     rowsPerPageOptions,
                     count: totalRecords,
+                    onFilterChange: (column, filterList) => {
+                        const columnIndex = columns.findIndex(c => c.name === column);
+                        filterManager.changeExtraFilter({
+                            [column as any]: filterList[columnIndex].length ? filterList[columnIndex][0] : null
+                        })
+                    },
                     customToolbar: () => (
                         <FilterResetButton 
                             handleClick={() => filterManager.resetFilter()}

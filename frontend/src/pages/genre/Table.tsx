@@ -5,7 +5,7 @@ import {useEffect, useState, useRef} from "react";
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
 import genreHttp from '../../utils/http/genre-http';
-import { Genre, ListResponse } from '../../utils/models';
+import { Category, Genre, ListResponse } from '../../utils/models';
 import DefaultTable, {TableColumn, makeActionStyles, MuiDataTableRefComponent} from '../../components/Table';
 import { IconButton, MuiThemeProvider } from '@material-ui/core';
 import { Link } from 'react-router-dom';
@@ -16,6 +16,7 @@ import useFilter from '../../hooks/useFilter';
 import { FilterResetButton } from '../../components/Table/FilterResetButton';
 import reducer, { Creators } from '../../store/filter';
 import *  as yup from '../../utils/vendor/yup';
+import categoryHttp from '../../utils/http/category-http';
 
 const columnsDefinition: TableColumn[] = [
     {
@@ -23,18 +24,26 @@ const columnsDefinition: TableColumn[] = [
         label: "ID",
         width: "25%",
         options: {
-            sort: false
+            sort: false,
+            filter: false
         },
     },
     {
         name: "name",
         label: "Nome",
         width: "41%",
+        options: {
+            filter: false
+        },
     },
     {
         name: "categories",
         label: "Categorias",
         options: {
+            filterType: 'multiselect',
+            filterOptions: {
+                names: []
+            },
             customBodyRender(value, tableMeta, updateValue) {
                 return value.map((resp: any) => resp.name).join(', ');
             }
@@ -55,6 +64,7 @@ const columnsDefinition: TableColumn[] = [
         name: "created_at",
         label: "Criado em",
         options: {
+            filter: false,
             customBodyRender(value, tableMeta, updateValue) {
                 return <span>{format(parseISO(value), 'dd/MM/yyyy')}</span>
             }
@@ -67,6 +77,7 @@ const columnsDefinition: TableColumn[] = [
         width: "13%",
         options: {
             sort: false,
+            filter: false,
             customBodyRender(value, tableMeta) {
                 return (
                     <IconButton
@@ -100,6 +111,7 @@ const Table = () => {
     const subscribed = useRef(true);
     const [data, setData] = useState<Genre[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [categories, setCategories] = useState<Category[]>();
     const tableRef = useRef() as React.MutableRefObject<MuiDataTableRefComponent>;
 
     const {
@@ -142,6 +154,40 @@ const Table = () => {
             }
         }
     });
+
+    const indexColumnCategories = columns.findIndex(c => c.name === 'categories');
+    const columnCategories = columns[indexColumnCategories];
+    const categoriesFilterValue = filterState.extraFilter && filterState.extraFilter.categories;
+    (columnCategories.options as any).filterList = categoriesFilterValue 
+        ? categoriesFilterValue
+        : [];
+
+    const serverSideFilterList = columns.map(column => []);
+    if (categoriesFilterValue) {
+        serverSideFilterList[indexColumnCategories] = categoriesFilterValue;
+    }
+
+    useEffect(() => {
+        let isSubscribed = true;
+        (async () => {
+            try {
+                const {data} = await categoryHttp.list({queryParams: {all: ''}});
+                if (isSubscribed) {
+                    setCategories(data.data);
+                    (columnCategories.options as any).filterOptions.names = data.data.map(category => category.name)
+                }
+            } catch (error) {
+                snackbar.enqueueSnackbar(
+                    'Não foi possível carregar as informações',
+                    {variant: 'error'}
+                )
+            }
+        })()
+
+        return () => {
+            isSubscribed = false;
+        }
+    }, []);
 
     useEffect(() => {
         subscribed.current = true;
@@ -197,20 +243,6 @@ const Table = () => {
         }
     }
 
-    /*useEffect(() => {
-        let isSubscribed = true;
-        (async () => {
-            const {data} = await genreHttp.list<ListResponse<Genre>>()
-            if (isSubscribed) {
-                setData(data.data)
-            }
-        })()
-
-        return () => {
-            isSubscribed = false;
-        }
-    }, []);*/
-
     return (
         <MuiThemeProvider theme={makeActionStyles(columnsDefinition.length - 1)}>
             <DefaultTable 
@@ -222,12 +254,19 @@ const Table = () => {
                 ref={tableRef}
                 options={{
                     serverSide: true,
+                     // serverSideFilterList,
                     responsive: "simple",
                     searchText: filterState.search as any,
                     page: filterState.pagination.page-1,
                     rowsPerPage: filterState.pagination.per_page,
                     rowsPerPageOptions,
                     count: totalRecords,
+                    onFilterChange: (column, filterList) => {
+                        const columnIndex = columns.findIndex(c => c.name === column);
+                        filterManager.changeExtraFilter({
+                            [column as any]: filterList[columnIndex].length ? filterList[columnIndex][0] : null
+                        })
+                    },
                     customToolbar: () => (
                         <FilterResetButton 
                             handleClick={() => filterManager.resetFilter()}
