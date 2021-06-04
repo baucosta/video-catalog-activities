@@ -231,7 +231,7 @@ const Table = () => {
                 ref={tableRef}
                 options={{
                     serverSide: true,
-                    // serverSideFilterList,
+                    serverSideFilterList,
                     responsive: "simple",
                     searchText: filterState.search as any,
                     page: filterState.pagination.page-1,
