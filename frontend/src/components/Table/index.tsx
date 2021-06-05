@@ -93,7 +93,7 @@ const Table = React.forwardRef<MuiDataTableRefComponent, TableProps>((props, ref
     }
 
     function applyResponsive() {
-        newProps.options.responsive = isSmOrDown ? 'simple' : 'vertical';
+        newProps.options.responsive = isSmOrDown ? 'stacked' : 'scrollFullHeight';
     }
 
     function getOriginalMuiDataTableProps() {

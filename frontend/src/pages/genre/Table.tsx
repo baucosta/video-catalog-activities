@@ -254,8 +254,8 @@ const Table = () => {
                 ref={tableRef}
                 options={{
                     serverSide: true,
-                     // serverSideFilterList,
-                    responsive: "simple",
+                    serverSideFilterList,
+                    responsive: "scrollFullHeight",
                     searchText: filterState.search as any,
                     page: filterState.pagination.page-1,
                     rowsPerPage: filterState.pagination.per_page,
@@ -275,7 +275,7 @@ const Table = () => {
                     onSearchChange: (value) => filterManager.changeSearch(value),
                     onChangePage: (page) =>  filterManager.changePage(page),
                     onChangeRowsPerPage: (perPage) => filterManager.changeRowsPerPage(perPage),
-                    onColumnSortChange: (changedColumn: string, direction: 'asc' | 'desc') => 
+                    onColumnSortChange: (changedColumn: string, direction: string) => 
                         filterManager.columnSortChange(changedColumn, direction)
                 }} 
             />

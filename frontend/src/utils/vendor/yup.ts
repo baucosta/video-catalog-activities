@@ -4,6 +4,7 @@ import { useCallback } from "react";
 setLocale({
     mixed: {
         required: '${path} é requerido',
+        notType: '${path} é inválido',
     },
     string: {
         max: '${path} precisa ter no máximo ${max} caracteres',
