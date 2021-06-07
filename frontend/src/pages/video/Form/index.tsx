@@ -2,13 +2,15 @@
 import { Checkbox, FormControlLabel, Grid, TextField, Typography } from '@material-ui/core';
 import React, { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
-import *  as yup from '../../utils/vendor/yup';
+import *  as yup from '../../../utils/vendor/yup';
 import { useHistory, useParams } from 'react-router';
 import { useSnackbar } from 'notistack';
-import { Video } from '../../utils/models';
-import SubmitActions from '../../components/SubmitActions';
-import { DefaultForm } from '../../components/DefaultForm';
-import videoHttp from '../../utils/http/video-http';
+import { Video } from '../../../utils/models';
+import SubmitActions from '../../../components/SubmitActions';
+import { DefaultForm } from '../../../components/DefaultForm';
+import videoHttp from '../../../utils/http/video-http';
+import Rating from '../../../components/Rating';
+import RatingField from './RatingField';
 
 const validationSchema = yup.object().shape({
     title: yup.string()
@@ -55,6 +57,13 @@ export const Form = () => {
     const { id } = useParams<{ id: string }>();
     const [video, setVideo] = useState<Video | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
+
+    useEffect(() => {
+        [
+            'rating',
+            'opened',
+        ].forEach(name => register({name}));
+    }, [register]);
 
     useEffect(() => {
       if (!id) {
@@ -191,7 +200,12 @@ export const Form = () => {
                 </Grid>
 
                 <Grid item xs={12} md={6}>
-                    Classificação
+                    <RatingField
+                        value={watch('rating')}
+                        error={errors.rating}
+                        disabled={loading}
+                        setValue={(value) => setValue('rating', value)}
+                    />
                     <br />
                     Uploads
                     <br />
