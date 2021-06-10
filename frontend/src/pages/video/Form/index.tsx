@@ -1,5 +1,5 @@
 // @flow 
-import { Checkbox, FormControlLabel, Grid, TextField, Typography } from '@material-ui/core';
+import { Checkbox, FormControlLabel, Grid, TextField, Typography, useMediaQuery, useTheme } from '@material-ui/core';
 import React, { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
 import *  as yup from '../../../utils/vendor/yup';
@@ -11,6 +11,7 @@ import { DefaultForm } from '../../../components/DefaultForm';
 import videoHttp from '../../../utils/http/video-http';
 import Rating from '../../../components/Rating';
 import RatingField from './RatingField';
+import InputFile from '../../../components/InputFile';
 
 const validationSchema = yup.object().shape({
     title: yup.string()
@@ -57,6 +58,8 @@ export const Form = () => {
     const { id } = useParams<{ id: string }>();
     const [video, setVideo] = useState<Video | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
+    const theme = useTheme()
+    const isGreaterMd = useMediaQuery(theme.breakpoints.up('md'));
 
     useEffect(() => {
         [
@@ -205,9 +208,13 @@ export const Form = () => {
                         error={errors.rating}
                         disabled={loading}
                         setValue={(value) => setValue('rating', value)}
+                        FormControlProps={{
+                            margin: isGreaterMd ? 'none' : 'normal'
+                        }}
                     />
                     <br />
                     Uploads
+                    <InputFile InputFileProps={} />
                     <br />
 
                     <FormControlLabel 
