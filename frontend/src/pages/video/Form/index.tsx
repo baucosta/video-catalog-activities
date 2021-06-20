@@ -1,7 +1,7 @@
 // @flow 
 import { Card, CardContent, Checkbox, FormControlLabel, Grid, TextField, Typography, useMediaQuery, Theme, useTheme, makeStyles } from '@material-ui/core';
-import React, { MutableRefObject, useEffect, useRef, useState, createRef } from "react";
-import { useForm } from 'react-hook-form';
+import React, { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import *  as yup from '../../../utils/vendor/yup';
 import { useHistory, useParams } from 'react-router';
 import { useSnackbar } from 'notistack';
@@ -11,8 +11,8 @@ import { DefaultForm } from '../../../components/DefaultForm';
 import videoHttp from '../../../utils/http/video-http';
 import RatingField from './RatingField';
 import UploadField from './UploadField';
-import { zipObject } from 'lodash';
-import { InputFileComponent } from '../../../components/InputFile';
+import GenreField from './GenreField';
+import CategoryField from './CategoryField';
 
 const useStyles = makeStyles((theme: Theme) => ({
     cardUpload: {
@@ -45,6 +45,12 @@ const validationSchema = yup.object().shape({
         .label('Duração')
         .required()
         .min(1),
+    genres: yup.array()
+        .label('Gêneros')
+        .required(),
+    categories: yup.array()
+        .label('Categorias')
+        .required(),
     rating: yup.string()
         .label('Classificação')
         .required(),
@@ -67,7 +73,9 @@ export const Form = () => {
     } = useForm<Video>({
         resolver,
         defaultValues: {
-          opened: true
+            opened: true,
+            genres: [],
+            categories: [],
         }
     });
 
@@ -79,9 +87,6 @@ export const Form = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const theme = useTheme()
     const isGreaterMd = useMediaQuery(theme.breakpoints.up('md'));
-    const uploadsRef = useRef(
-        zipObject(fileFields, fileFields.map(() => createRef()))
-    ) as MutableRefObject<{ [key: string]: MutableRefObject<InputFileComponent> }>;
 
     useEffect(() => {
         [
@@ -225,7 +230,27 @@ export const Form = () => {
                     </Grid>
                     Elenco
                     <br />
-                    Gêneros e Categorias
+                    <Grid container spacing={2}>
+                        <Grid item xs={12} md={6}>
+                            <GenreField
+                                genres={watch('genres')}
+                                setGenres={(value) => setValue('genres', value)}
+                                categories={watch('categories')}
+                                setCategories={(value) => setValue('categories', value)}
+                                error={errors.genres}
+                                disabled={loading}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <CategoryField
+                                categories={watch('categories')}
+                                setCategories={(value) => setValue('categories', value)}
+                                genres={watch('genres')}
+                                error={errors.categories}
+                                disabled={loading}
+                            />
+                        </Grid>
+                    </Grid>
                 </Grid>
 
                 <Grid item xs={12} md={6}>
@@ -245,13 +270,11 @@ export const Form = () => {
                                 Imagens
                             </Typography>
                             <UploadField
-                                ref={uploadsRef.current['thumb_file']}
                                 accept={'image/*'}
                                 label={'Thumb'}
                                 setValue={(value) => setValue('thumb_file', value)}
                             />
                             <UploadField
-                                ref={uploadsRef.current['banner_file']}
                                 accept={'image/*'}
                                 label={'Banner'}
                                 setValue={(value) => setValue('banner_file', value)}
@@ -265,13 +288,11 @@ export const Form = () => {
                                 Videos
                             </Typography>
                             <UploadField
-                                ref={uploadsRef.current['trailer_file']}
                                 accept={'video/mp4'}
                                 label={'Trailer'}
                                 setValue={(value) => setValue('trailer_file', value)}
                             />
                             <UploadField
-                                ref={uploadsRef.current['video_file']}
                                 accept={'video/mp4'}
                                 label={'Principal'}
                                 setValue={(value) => {

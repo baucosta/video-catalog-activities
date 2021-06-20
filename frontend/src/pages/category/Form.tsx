@@ -1,5 +1,5 @@
 // @flow 
-import { Checkbox, FormControlLabel, Grid, makeStyles, TextField, Theme } from '@material-ui/core';
+import { Checkbox, FormControlLabel, makeStyles, TextField, Theme } from '@material-ui/core';
 import React, { useEffect, useState } from "react";
 import { useForm } from 'react-hook-form';
 import categoryHttp from '../../utils/http/category-http';
@@ -31,12 +31,6 @@ export const Form = () => {
         resolver,
         defaultValues: {
           is_active: true
-        }
-    });
-
-    const classes = useStyles({
-        defaultValues: {
-            is_active: true
         }
     });
 

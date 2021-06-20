@@ -10,7 +10,6 @@ import { useSnackbar } from 'notistack';
 import useFilter from '../../hooks/useFilter';
 import { IconButton, MuiThemeProvider } from '@material-ui/core';
 import { FilterResetButton } from '../../components/Table/FilterResetButton';
-import { Creators } from '../../store/filter';
 import { Link } from 'react-router-dom';
 import EditIcon from '@material-ui/icons/Edit';
 import *  as yup from '../../utils/vendor/yup';
