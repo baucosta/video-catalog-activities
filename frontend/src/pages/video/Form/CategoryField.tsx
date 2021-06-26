@@ -97,7 +97,6 @@ const CategoryField = React.forwardRef<CategoryFieldComponent, CategoryFieldProp
                 <GridSelected>
                     {
                         categories.map((category, key) => {
-                            console.log(genres);
                             const genresFromCategory = getGenresFromCategory(genres, category)
                                 .map(genre => genre.name)
                                 .join(',');
