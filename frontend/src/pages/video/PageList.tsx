@@ -1,29 +1,30 @@
 import * as React from 'react';
-import { Box, Fab } from '@material-ui/core';
-import { Page } from '../../components/Page';
+import {Page} from "../../components/Page";
+import {Box, Fab} from "@material-ui/core";
 import {Link} from "react-router-dom";
 import AddIcon from '@material-ui/icons/Add';
-import Table from './Table';
+import Table from "./Table";
 
-const List = () => {
+const PageList = () => {
     return (
-        <Page title={'Listagem de Vídeos'}>
+        <Page title={'Listagem de vídeos'}>
             <Box dir={'rtl'} paddingBottom={2}>
                 <Fab
                     title="Adicionar vídeo"
                     color={'secondary'}
                     size="small"
                     component={Link}
-                    to="/videos/create">
-                        <AddIcon/>
+                    to="/videos/create"
+                >
+                    <AddIcon/>
                 </Fab>
             </Box>
-                <Table/>
             <Box>
-                
+                <Table/>
             </Box>
         </Page>
     );
 };
 
-export default List;
+
+export default PageList;

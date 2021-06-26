@@ -1,15 +1,11 @@
-// @flow 
 import * as React from 'react';
-import MUIDataTable, { MUIDataTableColumn, MUIDataTableOptions, MUIDataTableProps } from 'mui-datatables';
+import MUIDataTable, {MUIDataTableColumn, MUIDataTableOptions, MUIDataTableProps} from "mui-datatables";
 import {merge, omit, cloneDeep} from 'lodash';
-import { MuiThemeProvider, Theme, useMediaQuery, useTheme } from '@material-ui/core';
+import {MuiThemeProvider, Theme, useMediaQuery, useTheme} from "@material-ui/core";
 import DebouncedTableSearch from "./DebouncedTableSearch";
+import {RefAttributes} from "react";
 
-export interface TableColumn extends MUIDataTableColumn {
-    width?: string;
-}
-
-const makdeDefaultOptions = (debouncedSearchTime?): MUIDataTableOptions => ({
+const makeDefaultOptions = (debouncedSearchTime?): MUIDataTableOptions => ({
     print: false,
     download: false,
     textLabels: {
@@ -20,61 +16,69 @@ const makdeDefaultOptions = (debouncedSearchTime?): MUIDataTableOptions => ({
         pagination: {
             next: "Próxima página",
             previous: "Página anterior",
-            rowsPerPage: "Por página",
+            rowsPerPage: "Por página:",
             displayRows: "de",
         },
         toolbar: {
             search: "Busca",
             downloadCsv: "Download CSV",
             print: "Imprimir",
-            viewColumns: "Ver colunas",
-            filterTable: "Filtrar tabelas",
+            viewColumns: "Ver Colunas",
+            filterTable: "Filtrar Tabelas",
         },
         filter: {
             all: "Todos",
-            title: "Filtros",
+            title: "FILTROS",
             reset: "LIMPAR",
         },
         viewColumns: {
-            title: "Ver colunas",
-            titleAria: "Ver/Esconder colunas da tablea",
+            title: "Ver Colunas",
+            titleAria: "Ver/Esconder Colunas da Tabela",
         },
         selectedRows: {
-            text: "registro(s) selecionados",
+            text: "registros(s) selecionados",
             delete: "Excluir",
             deleteAria: "Excluir registros selecionados",
-        }
+        },
     },
-    customSearchRender: (searchText: any, handleSearch: any, hideSearch: any, options: any) => {
-        return <DebouncedTableSearch 
-        searchText={searchText}
-        onSearch={handleSearch}
-        onHide={hideSearch}
-        options={options}
-        debounceTime={debouncedSearchTime}
+    customSearchRender: (searchText: string,
+                         handleSearch: any,
+                         hideSearch: any,
+                         options: any) => {
+        return <DebouncedTableSearch
+            searchText={searchText}
+            onSearch={handleSearch}
+            onHide={hideSearch}
+            options={options}
+            debounceTime={debouncedSearchTime}
         />
     }
 });
+
+export interface TableColumn extends MUIDataTableColumn {
+    width?: string
+}
 
 export interface MuiDataTableRefComponent {
     changePage: (page: number) => void;
     changeRowsPerPage: (rowsPerPage: number) => void;
 }
 
-export interface TableProps extends MUIDataTableProps, React.RefAttributes<MuiDataTableRefComponent> {
+export interface TableProps extends MUIDataTableProps, RefAttributes<MuiDataTableRefComponent> {
     columns: TableColumn[];
-    loading: boolean;
+    loading?: boolean;
     debouncedSearchTime?: number;
 }
 
 
 const Table = React.forwardRef<MuiDataTableRefComponent, TableProps>((props, ref) => {
+
     function extractMuiDataTableColumns(columns: TableColumn[]): MUIDataTableColumn[] {
-        setColumnsWidth(columns);
+        setColumnsWith(columns);
         return columns.map(column => omit(column, 'width'))
     }
 
-    function setColumnsWidth(columns: TableColumn[]) {
+    function setColumnsWith(columns: TableColumn[]) {
         columns.forEach((column, key) => {
             if (column.width) {
                 const overrides = theme.overrides as any;
@@ -87,13 +91,13 @@ const Table = React.forwardRef<MuiDataTableRefComponent, TableProps>((props, ref
 
     function applyLoading() {
         const textLabels = (newProps.options as any).textLabels;
-        
-        textLabels.body.noMatch = 
-            newProps.loading ? 'Carregando...' :textLabels.body.noMatch;
+        textLabels.body.noMatch = newProps.loading === true
+            ? 'Carregando...'
+            : textLabels.body.noMatch;
     }
 
     function applyResponsive() {
-        newProps.options.responsive = isSmOrDown ? 'stacked' : 'scrollFullHeight';
+        newProps.options.responsive = isSmOrDown ? 'scrollMaxHeight' : 'stacked';
     }
 
     function getOriginalMuiDataTableProps() {
@@ -106,12 +110,12 @@ const Table = React.forwardRef<MuiDataTableRefComponent, TableProps>((props, ref
     const theme = cloneDeep<Theme>(useTheme());
     const isSmOrDown = useMediaQuery(theme.breakpoints.down('sm'));
 
-    const defaultOptions = makdeDefaultOptions(props.debouncedSearchTime);
+    const defaultOptions = makeDefaultOptions(props.debouncedSearchTime);
 
     const newProps = merge(
-        {options: cloneDeep(defaultOptions)}, 
+        {options: cloneDeep(defaultOptions)},
         props,
-        {columns: extractMuiDataTableColumns(props.columns)}
+        {columns: extractMuiDataTableColumns(props.columns)},
     );
 
     applyLoading();
@@ -134,10 +138,8 @@ export function makeActionStyles(column) {
         const selector = `&[data-testid^="MuiDataTableBodyCell-${column}"]`;
         (copyTheme.overrides as any).MUIDataTableBodyCell.root[selector] = {
             paddingTop: '0px',
-            paddingBottom: '0px',
+            paddingBottom: '0px'
         };
-
         return copyTheme;
     }
-    
 }

@@ -15,7 +15,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import *  as yup from '../../utils/vendor/yup';
 import { invert } from 'lodash';
 
-const castMemberNames = CastMemberTypeMap.map(v => v.description);
+const castMemberNames = Object.values(CastMemberTypeMap);
 
 // export interface CastMember {
 //     id: string;
@@ -49,10 +49,9 @@ const columnsDefinition: TableColumn[] = [
             filterOptions: {
                names: castMemberNames
             },
-            customBodyRender(value, tableMeta, updateValue) {
-                return CastMemberTypeMap
-                .filter(resp => resp.type === value)
-                .map(resp => resp.description);
+            customBodyRender: (value, tableMeta, updateValue) => {
+                //typescript any
+                return CastMemberTypeMap[value];
             },
         },
         width: "10%",

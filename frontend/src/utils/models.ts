@@ -36,22 +36,16 @@ export interface CastMember extends Timestampable {
     type: number;
 }
 
-export const CastMemberTypeMap = [
-    {
-        type: 1,
-        description: 'Diretor',
-    },
-    {
-        type: 2,
-        description: 'Ator',
-    },
-];
+export const CastMemberTypeMap = {
+    1: 'Diretor',
+    2: 'Ator'
+};
 
 export interface Genre extends Timestampable {
     readonly id: string;
     name: string;
-    is_active: boolean;
-    categories_id: Category[];
+    is_active: number;
+    categories: Category[];
 }
 
 interface GenreVideo extends Omit<Genre, 'categories'> {
@@ -63,9 +57,9 @@ export const VideoFileFieldsMap = {
     'banner_file': 'Banner',
     'trailer_file': 'Trailer',
     'video_file': 'Principal',
-}
+};
 
-export interface Video extends Timestampable {
+export interface Video extends Timestampable{
     readonly id: string;
     title: string;
     description: string;
@@ -80,5 +74,4 @@ export interface Video extends Timestampable {
     banner_file_url: string;
     trailer_file_url: string;
     video_file_url: string;
-    
 }

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Autocomplete, AutocompleteProps, UseAutocompleteSingleProps} from "@material-ui/lab";
+import {Autocomplete, AutocompleteProps } from "@material-ui/lab";
 import {TextFieldProps} from "@material-ui/core/TextField";
 import {CircularProgress, TextField} from "@material-ui/core";
 import {useState, useEffect} from "react";
@@ -11,7 +11,8 @@ interface AsyncAutocompleteProps extends RefAttributes<AsyncAutocompleteComponen
     fetchOptions: (searchText) => Promise<any>;
     debounceTime?: number;
     TextFieldProps?: TextFieldProps;
-    AutocompleteProps?: Omit<AutocompleteProps<any>, 'renderInput'> & UseAutocompleteSingleProps<any>;
+    AutocompleteProps?: any;
+    // AutocompleteProps?: Omit<AutocompleteProps<any>, 'renderInput'> & UseAutocompleteProps<any>;
 }
 
 export interface AsyncAutocompleteComponent {
@@ -36,7 +37,8 @@ const AsyncAutocomplete = React.forwardRef<AsyncAutocompleteComponent, AsyncAuto
         ...(props.TextFieldProps && {...props.TextFieldProps})
     };
 
-    const autocompleteProps: AutocompleteProps<any> = {
+    // const autocompleteProps: AutocompleteProps<any> = {
+    const autocompleteProps: any = {
         loadingText: 'Carregando...',
         noOptionsText: 'Nenhum item encontrado',
         ...(AutocompleteProps && {...AutocompleteProps}),

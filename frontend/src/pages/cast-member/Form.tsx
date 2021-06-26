@@ -1,109 +1,114 @@
-// @flow 
-import { FormControl, FormControlLabel, FormHelperText, FormLabel, makeStyles, Radio, RadioGroup, TextField, Theme } from '@material-ui/core';
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
-import castMemberHttp from '../../utils/http/cast-member-http';
-import {useEffect, useState} from "react";
-import *  as yup from '../../utils/vendor/yup';
-import { useHistory, useParams } from 'react-router';
-import { useSnackbar } from 'notistack';
-import { CastMember, CastMemberTypeMap } from '../../utils/models';
-import SubmitActions from '../../components/SubmitActions';
-import { DefaultForm } from '../../components/DefaultForm';
-
-const useStyles = makeStyles((theme: Theme) => {
-    return {
-        submit: {
-            margin: theme.spacing(1)
-        }
-    }
-})
+import {
+    FormControl, FormControlLabel, FormHelperText,
+    FormLabel,
+    Radio,
+    RadioGroup,
+    TextField,
+} from "@material-ui/core";
+import {useForm} from "react-hook-form";
+import castMemberHttp from "../../utils/http/cast-member-http";
+import {useEffect} from "react";
+import * as yup from '../../utils/vendor/yup';
+import {useSnackbar} from "notistack";
+import {useHistory, useParams} from "react-router";
+import {useState} from "react";
+import {CastMember} from "../../utils/models";
+import SubmitActions from "../../components/SubmitActions";
+import {DefaultForm} from "../../components/DefaultForm";
 
 const validationSchema = yup.object().shape({
-    name: yup.string().label('Nome').required("Nome é requerido").max(255),
-    type: yup.number().required("Tipo é requerido").positive().integer(),
+    name: yup.string()
+        .label('Nome')
+        .required()
+        .max(255),
+    type: yup.number()
+        .label('Tipo')
+        .required(),
 });
 
-
 export const Form = () => {
-    const resolver = yup.useYupValidationResolver(validationSchema);
 
-    const {register, handleSubmit, setValue, getValues, errors, reset, watch, trigger} = useForm<CastMember>({
-        resolver
+    const {
+        register,
+        handleSubmit,
+        getValues,
+        setValue,
+        errors,
+        reset,
+        watch,
+        triggerValidation
+    } = useForm<{name, type}>({
+        validationSchema,
     });
-
-    const classes = useStyles();
-
-    useEffect(() => {
-        register({name: "type"})
-    }, [register])
-
-    const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setValue("type", parseInt((event.target as HTMLInputElement).value));
-    };
 
     const snackbar = useSnackbar();
     const history = useHistory();
-    const { id } = useParams<{ id: string }>();
-    const [castMember, setCastMember] = useState<{id: string} | null>(null);
+    const {id} = useParams<{id: string}>();
+    const [castMember, setCastMember] = useState<CastMember | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
     useEffect(() => {
         if (!id) {
-          return ;
+            return;
         }
-
-        (async function getCastMember() {
+        let isSubscribed = true;
+        (async () => {
             setLoading(true);
-
             try {
                 const {data} = await castMemberHttp.get(id);
-                setCastMember(data.data)
-                reset(data.data)
-            } catch(error) {
-                console.log(error);
-    
+                if (isSubscribed) {
+                    setCastMember(data.data);
+                    reset(data.data);
+                }
+            } catch (error) {
+                console.error(error);
                 snackbar.enqueueSnackbar(
-                  'Não foi possível carregar as informações',
-                  {variant: 'error'}
-                );
+                    'Não foi possível carregar as informações',
+                    {variant: 'error',}
+                )
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
-        })()
-      }, []);
+        })();
+
+        return () => {
+            isSubscribed = false;
+        }
+    }, []);
+
+    useEffect(() => {
+        register({name: "type"})
+    }, [register]);
 
     async function onSubmit(formData, event) {
         setLoading(true);
-
         try {
             const http = !castMember
-                ? castMemberHttp.create(formData)
-                : castMemberHttp.update(castMember.id, formData)
-
-          const {data} = await http;
-           
-          snackbar.enqueueSnackbar(
-            'Membro do elenco salvo com sucesso',
-            {variant: 'success'}
-          );
-
-          setTimeout(() => {
-            event ? (
-              id 
-                ? history.replace(`/cast_members/${data.data.id}/edit`)
-                : history.push(`/cast_members/${data.data.id}/edit`)
+                ? castMemberHttp.create({})
+                : castMemberHttp.update(castMember.id, formData);
+            const {data} = await http;
+            snackbar.enqueueSnackbar(
+                'Membro de elenco salvo com sucesso',
+                {variant: 'success'}
+            );
+            setTimeout(() => {
+                event
+                    ? (
+                        id
+                            ? history.replace(`/cast-members/${data.data.id}/edit`)
+                            : history.push(`/cast-members/${data.data.id}/edit`)
+                    )
+                    : history.push('/cast-members')
+            });
+        } catch (error) {
+            console.error(error);
+            snackbar.enqueueSnackbar(
+                'Não foi possível salvar o membro de elenco',
+                {variant: 'error'}
             )
-            : history.push('/cast_members')
-          });
-        } catch(error) {
-          console.log(error);
-          snackbar.enqueueSnackbar(
-            'Erro ao salvar membro do elenco',
-            {variant: 'error'}
-          );
         } finally {
-          setLoading(false);
+            setLoading(false)
         }
     }
 
@@ -113,48 +118,41 @@ export const Form = () => {
                 name="name"
                 label="Nome"
                 fullWidth
-                variant={"outlined"} 
-                inputRef={register} 
-                InputLabelProps={{shrink: true}}
+                variant={"outlined"}
+                inputRef={register}
                 disabled={loading}
                 error={errors.name !== undefined}
-                helperText={errors.name && errors.name.message} 
+                helperText={errors.name && errors.name.message}
+                InputLabelProps={{shrink: true}}
             />
-            
-            <FormControl error={errors.type !== undefined} component="fieldset" className={classes.submit}>
+            <FormControl
+                margin={"normal"}
+                error={errors.type !== undefined}
+                disabled={loading}
+            >
                 <FormLabel component="legend">Tipo</FormLabel>
-                <RadioGroup name="type" onChange={handleChange}>
-                    {CastMemberTypeMap.map(data => (
-                        <FormControlLabel 
-                            label={data.description} 
-                            key={data.type}
-                            value={data.type.toString()} 
-                            disabled={loading}
-                            control={
-                                <Radio 
-                                    color={"primary"} 
-                                    checked={watch('type') == data.type}
-                                />
-                            } 
-                        />
-                    ))}
+                <RadioGroup
+                    name="type"
+                    onChange={(e) => {
+                        setValue('type', parseInt(e.target.value));
+                    }}
+                    value={watch('type') + ""}
+                >
+                    <FormControlLabel value="1" control={<Radio color={"primary"}/>} label="Diretor"/>
+                    <FormControlLabel value="2" control={<Radio color={"primary"}/>} label="Ator"/>
                 </RadioGroup>
                 {
-                    errors.type
-                        ? <FormHelperText id="type-helper-text">{errors.type.message}</FormHelperText>
-                        : null
+                    errors.type && <FormHelperText id="type-helper-text">{errors.type.message}</FormHelperText>
                 }
             </FormControl>
-
-            <SubmitActions 
-                disabledButtons={loading} 
-                handleSave={() => 
-                    trigger().then(isValid => {
-                        isValid && onSubmit(getValues(), null);
+            <SubmitActions
+                disabledButtons={loading}
+                handleSave={() =>
+                    triggerValidation().then(isValid => {
+                        isValid && onSubmit(getValues(), null)
                     })
                 }
-            >
-            </SubmitActions>
+            />
         </DefaultForm>
     );
 };

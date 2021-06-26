@@ -34,7 +34,7 @@ export const SnackbarProvider: React.FC<SnackbarProviderProps> = (props) => {
         },
         preventDuplicate: true,
         ref: (el) => snackbarProviderRef = el,
-        action: (key: string) => {
+        action: (key) => (
             <IconButton 
                 color={"inherit"} 
                 style={{fontSize: 20}}
@@ -42,7 +42,7 @@ export const SnackbarProvider: React.FC<SnackbarProviderProps> = (props) => {
             >
                 <CloseIcon/>
             </IconButton>
-        }
+        )
     };
 
     const newProps = {...defaultProps, ...props};

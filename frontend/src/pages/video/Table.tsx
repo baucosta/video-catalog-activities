@@ -1,92 +1,100 @@
-// @flow 
 import * as React from 'react';
-import {useEffect, useState, useRef} from "react";
+import {useContext, useEffect, useRef, useState} from "react";
 import format from "date-fns/format";
 import parseISO from "date-fns/parseISO";
-import categoryHttp from '../../utils/http/category-http';
-import { BadgeNo, BadgeYes } from '../../components/Badge';
-import { Category, ListResponse } from '../../utils/models';
-import DefaultTable, {TableColumn, makeActionStyles, MuiDataTableRefComponent} from '../../components/Table';
-import { useSnackbar } from 'notistack';
-import { IconButton, MuiThemeProvider } from '@material-ui/core';
-import { Link } from 'react-router-dom';
+import videoHttp from "../../utils/http/video-http";
+import {Video, ListResponse} from "../../utils/models";
+import DefaultTable, {makeActionStyles, TableColumn, MuiDataTableRefComponent} from '../../components/Table';
+import {useSnackbar} from "notistack";
+import {IconButton, MuiThemeProvider} from "@material-ui/core";
+import {Link} from "react-router-dom";
 import EditIcon from '@material-ui/icons/Edit';
-import { FilterResetButton } from '../../components/Table/FilterResetButton';
-import useFilter from '../../hooks/useFilter';
+import {FilterResetButton} from "../../components/Table/FilterResetButton";
+import useFilter from "../../hooks/useFilter";
 
 const columnsDefinition: TableColumn[] = [
     {
-        name: "id",
-        label: "ID",
-        width: "30%",
+        name: 'id',
+        label: 'ID',
+        width: '30%',
         options: {
             sort: false,
             filter: false
-        },
+        }
     },
     {
-        name: "name",
-        label: "Nome",
-        width: "43%",
+        name: "title",
+        label: "Título",
+        width: '20%',
         options: {
             filter: false
-        },
+        }
     },
     {
-        name: "is_active",
-        label: "Ativo?",
+        name: "genres",
+        label: "Gêneros",
+        width: '13%',
         options: {
-            filterOptions: {
-                names: ['Sim', 'Não']
-            },
-            customBodyRender(value, tableMeta, updateValue) {
-                return value ? <BadgeYes/> : <BadgeNo/>;
+            sort: false,
+            filter: false,
+            customBodyRender: (value, tableMeta, updateValue) => {
+                return value.map(value => value.name).join(', ');
             }
-        },
-        width: "4%",
+        }
+    },
+    {
+        name: "categories",
+        label: "Categorias",
+        width: '12%',
+        options: {
+            sort: false,
+            filter: false,
+            customBodyRender: (value, tableMeta, updateValue) => {
+                return value.map(value => value.name).join(', ');
+            }
+        }
     },
     {
         name: "created_at",
         label: "Criado em",
+        width: '10%',
         options: {
             filter: false,
             customBodyRender(value, tableMeta, updateValue) {
                 return <span>{format(parseISO(value), 'dd/MM/yyyy')}</span>
             }
-        },
-        width: "10%",
+        }
     },
     {
         name: "actions",
         label: "Ações",
-        width: "13%",
+        width: '13%',
         options: {
             sort: false,
             filter: false,
-            customBodyRender(value, tableMeta) {
+            customBodyRender: (value, tableMeta) => {
                 return (
                     <IconButton
                         color={'secondary'}
                         component={Link}
-                        to={`/categories/${tableMeta.rowData[0]}/edit`}
+                        to={`/videos/${tableMeta.rowData[0]}/edit`}
                     >
-                        <EditIcon fontSize={'inherit'} />
+                        <EditIcon/>
                     </IconButton>
                 )
             }
-        },
-    },
+        }
+    }
 ];
 
 const debounceTime = 300;
 const debouncedSearchTime = 300;
 const rowsPerPage = 15;
-const rowsPerPageOptions = [15, 25, 50]
-
+const rowsPerPageOptions = [15, 25, 50];
 const Table = () => {
     const snackbar = useSnackbar();
     const subscribed = useRef(true);
-    const [data, setData] = useState<Category[]>([]);
+    const [data, setData] = useState<Video[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const tableRef = useRef() as React.MutableRefObject<MuiDataTableRefComponent>;
 
@@ -95,9 +103,8 @@ const Table = () => {
         filterManager,
         filterState,
         debouncedFilterState,
-        dispatch,
         totalRecords,
-        setTotalRecords
+        setTotalRecords,
     } = useFilter({
         columns: columnsDefinition,
         debounceTime: debounceTime,
@@ -108,57 +115,44 @@ const Table = () => {
 
     useEffect(() => {
         subscribed.current = true;
-        filterManager.pushHistory();
         getData();
-
         return () => {
             subscribed.current = false;
         }
     }, [
-        filterManager.cleanSearchText(debouncedFilterState.search), 
-        debouncedFilterState.pagination.page, 
+        filterManager.cleanSearchText(debouncedFilterState.search),
+        debouncedFilterState.pagination.page,
         debouncedFilterState.pagination.per_page,
-        debouncedFilterState.order,
+        debouncedFilterState.order
     ]);
 
     async function getData() {
-        setLoading(true);
         try {
-            const {data} = await categoryHttp.list<ListResponse<Category>>({
+            const {data} = await videoHttp.list<ListResponse<Video>>({
                 queryParams: {
                     search: filterManager.cleanSearchText(filterState.search),
-                    page: filterState.pagination.page,
-                    per_page: filterState.pagination.per_page,
-                    sort: filterState.order.sort,
-                    dir: filterState.order.dir,
+                    page: debouncedFilterState.pagination.page,
+                    per_page: debouncedFilterState.pagination.per_page,
+                    sort: debouncedFilterState.order.sort,
+                    dir: debouncedFilterState.order.dir,
                 }
-            })
+            });
             if (subscribed.current) {
                 setData(data.data);
                 setTotalRecords(data.meta.total);
-                // setfilterState((prevState => (
-                //     {
-                //         ...prevState,
-                //         pagination: {
-                //             ...prevState.pagination,
-                //             total: data.meta.total
-                //         }
-                //     }
-                // )))
             }
-        } catch(error) {
-            if (categoryHttp.isCancelledRequest(error)) {
+        } catch (error) {
+            console.error(error);
+            if (videoHttp.isCancelledRequest(error)) {
                 return;
             }
             snackbar.enqueueSnackbar(
                 'Não foi possível carregar as informações',
-                {variant: 'error'}
-              );
-
-        } finally {
-            setLoading(false);
+                {variant: 'error',}
+            )
         }
     }
+
 
     return (
         <MuiThemeProvider theme={makeActionStyles(columnsDefinition.length - 1)}>
@@ -194,3 +188,4 @@ const Table = () => {
 };
 
 export default Table;
+

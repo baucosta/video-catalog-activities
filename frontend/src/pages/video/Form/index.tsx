@@ -1,6 +1,6 @@
 // @flow 
 import { Card, CardContent, Checkbox, FormControlLabel, Grid, TextField, Typography, useMediaQuery, Theme, useTheme, makeStyles } from '@material-ui/core';
-import React, { useEffect, useState } from "react";
+import React, { createRef, MutableRefObject, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import *  as yup from '../../../utils/vendor/yup';
 import { useHistory, useParams } from 'react-router';
@@ -11,8 +11,11 @@ import { DefaultForm } from '../../../components/DefaultForm';
 import videoHttp from '../../../utils/http/video-http';
 import RatingField from './RatingField';
 import UploadField from './UploadField';
-import GenreField from './GenreField';
-import CategoryField from './CategoryField';
+import GenreField, { GenreFieldComponent } from './GenreField';
+import CategoryField, { CategoryFieldComponent } from './CategoryField';
+import CastMemberField, { CastMemberFieldComponent } from './CastMemberField';
+import { omit, zipObject } from 'lodash';
+import { InputFileComponent } from '../../../components/InputFile';
 
 const useStyles = makeStyles((theme: Theme) => ({
     cardUpload: {
@@ -45,41 +48,65 @@ const validationSchema = yup.object().shape({
         .label('Duração')
         .required()
         .min(1),
+    cast_members: yup.array()
+        .label('Elenco')
+        .required(),
     genres: yup.array()
         .label('Gêneros')
-        .required(),
+        .required()
+        .test({
+            message: 'Cada gênero escolhido precisa ter pelo menos uma categoria selecionada',
+            test(value) {
+                return value.every(
+                    v => v.categories.filter(
+                        cat => this.parent.categories.map(c => c.id).includes(cat.id)
+                    ).length !== 0
+                );
+            }
+        }),
     categories: yup.array()
         .label('Categorias')
         .required(),
     rating: yup.string()
         .label('Classificação')
-        .required(),
+        .required()
 });
+
 
 const fileFields = Object.keys(VideoFileFieldsMap);
 
 export const Form = () => {
-    const resolver = yup.useYupValidationResolver(validationSchema);
-
     const {
-        register, 
-        handleSubmit, 
+        register,
+        handleSubmit,
         getValues,
-        setValue, 
-        errors, 
-        reset, 
-        watch, 
-        trigger
-    } = useForm<Video>({
-        resolver,
+        setValue,
+        errors,
+        reset,
+        watch,
+        triggerValidation
+    } = useForm<{
+        title,
+        description,
+        year_launched,
+        duration,
+        rating,
+        cast_members,
+        genres,
+        categories,
+        opened
+    }>({
+        validationSchema,
         defaultValues: {
-            opened: true,
+            rating: null,
+            cast_members: [],
             genres: [],
             categories: [],
+            opened: false,
         }
     });
 
-    const snackbar = useSnackbar();
+    const {enqueueSnackbar} = useSnackbar();
     const classes = useStyles();
     const history = useHistory();
     const { id } = useParams<{ id: string }>();
@@ -87,6 +114,12 @@ export const Form = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const theme = useTheme()
     const isGreaterMd = useMediaQuery(theme.breakpoints.up('md'));
+    const castMemberRef = useRef() as MutableRefObject<CastMemberFieldComponent>;
+    const genreRef = useRef() as MutableRefObject<GenreFieldComponent>;
+    const categoryRef = useRef() as MutableRefObject<CategoryFieldComponent>;
+    const uploadsRef = useRef(
+        zipObject(fileFields, fileFields.map(() => createRef()))
+    ) as MutableRefObject<{ [key: string]: MutableRefObject<InputFileComponent> }>;
 
     useEffect(() => {
         [
@@ -117,7 +150,7 @@ export const Form = () => {
         } catch(error) {
             console.log(error);
 
-            snackbar.enqueueSnackbar(
+            enqueueSnackbar(
               'Não foi possível carregar as informações',
               {variant: 'error'}
             );
@@ -132,38 +165,52 @@ export const Form = () => {
     }, []);
 
     async function onSubmit(formData, event) {
-        setLoading(true);
+        const sendData = omit(
+            formData,
+            [...fileFields, 'cast_members', 'genres', 'categories']
+        );
+        sendData['cast_members_id'] = formData['cast_members'].map(cast_member => cast_member.id);
+        sendData['categories_id'] = formData['categories'].map(category => category.id);
+        sendData['genres_id'] = formData['genres'].map(genre => genre.id);
 
         try {
-          const http = !video
-            ? videoHttp.create(formData)
-            : videoHttp.update(video.id, formData);
-
-          const {data} = await http;
-           
-          snackbar.enqueueSnackbar(
-            'Vídeo salva com sucesso',
-            {variant: 'success'}
-          );
-
-          setTimeout(() => {
-            event ? (
-              id 
-                ? history.replace(`/videos/${data.data.id}/edit`)
-                : history.push(`/videos/${data.data.id}/edit`)
+            const http = !video
+                ? videoHttp.create(sendData)
+                : videoHttp.update(video.id, {...sendData, _method: 'PUT'}, {http: {usePost: true}});
+            const {data} = await http;
+            enqueueSnackbar(
+                'Vídeo salvo com sucesso',
+                {variant: 'success'}
+            );
+            id && resetForm(video);
+            setTimeout(() => {
+                event
+                    ? (
+                        id
+                            ? history.replace(`/videos/${data.data.id}/edit`)
+                            : history.push(`/videos/${data.data.id}/edit`)
+                    )
+                    : history.push('/videos')
+            });
+        } catch (error) {
+            console.error(error);
+            enqueueSnackbar(
+                'Não foi possível salvar o vídeo',
+                {variant: 'error'}
             )
-            : history.push('/videos')
-          });
-        } catch(error) {
-          console.log(error);
-          snackbar.enqueueSnackbar(
-            'Erro ao salvar categoria',
-            {variant: 'error'}
-          );
-        } finally {
-          setLoading(false);
         }
     }
+
+    function resetForm(data) {
+        Object.keys(uploadsRef.current).forEach(
+            field => uploadsRef.current[field].current.clear()
+        );
+        castMemberRef.current.clear();
+        genreRef.current.clear();
+        categoryRef.current.clear();
+        reset(data);//removido
+    }
+
 
     return (
         <DefaultForm GridItemProps={{xs: 12}} onSubmit={handleSubmit(onSubmit)}>
@@ -228,11 +275,18 @@ export const Form = () => {
                             />
                         </Grid>
                     </Grid>
-                    Elenco
-                    <br />
+                    <CastMemberField
+                        ref={castMemberRef}
+                        castMembers={watch('cast_members')}
+                        setCastMembers={(value) => setValue('cast_members', value)}
+                        error={errors.cast_members}
+                        disabled={loading}
+                    />
+                    
                     <Grid container spacing={2}>
                         <Grid item xs={12} md={6}>
                             <GenreField
+                                ref={genreRef}
                                 genres={watch('genres')}
                                 setGenres={(value) => setValue('genres', value)}
                                 categories={watch('categories')}
@@ -243,6 +297,7 @@ export const Form = () => {
                         </Grid>
                         <Grid item xs={12} md={6}>
                             <CategoryField
+                                ref={categoryRef}
                                 categories={watch('categories')}
                                 setCategories={(value) => setValue('categories', value)}
                                 genres={watch('genres')}
@@ -270,11 +325,13 @@ export const Form = () => {
                                 Imagens
                             </Typography>
                             <UploadField
-                                accept={'image/*'}
-                                label={'Thumb'}
-                                setValue={(value) => setValue('thumb_file', value)}
+                                 ref={uploadsRef.current['thumb_file']}
+                                 accept={'image/*'}
+                                 label={'Thumb'}
+                                 setValue={(value) => setValue('thumb_file', value)}
                             />
                             <UploadField
+                                ref={uploadsRef.current['banner_file']}
                                 accept={'image/*'}
                                 label={'Banner'}
                                 setValue={(value) => setValue('banner_file', value)}
@@ -288,11 +345,13 @@ export const Form = () => {
                                 Videos
                             </Typography>
                             <UploadField
+                                ref={uploadsRef.current['trailer_file']}
                                 accept={'video/mp4'}
                                 label={'Trailer'}
                                 setValue={(value) => setValue('trailer_file', value)}
                             />
                             <UploadField
+                                ref={uploadsRef.current['video_file']}
                                 accept={'video/mp4'}
                                 label={'Principal'}
                                 setValue={(value) => {
@@ -302,34 +361,38 @@ export const Form = () => {
                             />
                         </CardContent>
                     </Card>
-                    <br />
+                    
 
-                    <FormControlLabel 
-                        control={
-                            <Checkbox 
-                                name="opened"
-                                color={"primary"}
-                                onChange={
-                                    () => setValue('opened', !getValues()['opened'])
+                    <Card className={classes.cardOpened}>
+                        <CardContent className={classes.cardContentOpened}>
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        name="opened"
+                                        color={'primary'}
+                                        onChange={
+                                            () => setValue('opened', !getValues()['opened'])
+                                        }
+                                        checked={watch('opened')}
+                                        disabled={loading}
+                                    />
                                 }
-                                checked={watch('opened')}
-                                disabled={loading}
+                                label={
+                                    <Typography color="primary" variant={"subtitle2"}>
+                                        Quero que este conteúdo apareça na seção lançamentos
+                                    </Typography>
+                                }
+                                labelPlacement="end"
                             />
-                        }
-                        label={
-                            <Typography color="primary" variant={"subtitle2"}>
-                                Quer que este conteúdo apareça na seção lançamentos
-                            </Typography>
-                        }
-                        labelPlacement={'end'}
-                    />
+                        </CardContent>
+                    </Card>
                 </Grid>
             </Grid>
 
             <SubmitActions 
                 disabledButtons={loading} 
                 handleSave={() => 
-                    trigger().then(isValid => {
+                    triggerValidation().then(isValid => {
                         isValid && onSubmit(getValues(), null);
                     })
                 }
