@@ -1,6 +1,6 @@
 // @flow 
 import { Card, CardContent, Checkbox, FormControlLabel, Grid, TextField, Typography, useMediaQuery, Theme, useTheme, makeStyles } from '@material-ui/core';
-import React, { createRef, MutableRefObject, useEffect, useRef, useState } from "react";
+import React, { createRef, MutableRefObject, useContext, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import *  as yup from '../../../utils/vendor/yup';
 import { useHistory, useParams } from 'react-router';
@@ -17,6 +17,7 @@ import CastMemberField, { CastMemberFieldComponent } from './CastMemberField';
 import { omit, zipObject } from 'lodash';
 import { InputFileComponent } from '../../../components/InputFile';
 import useSnackbarFormError from '../../../hooks/useSnackbarFormError';
+import LoadingContext from '../../../components/loading/LoadingContext';
 
 const useStyles = makeStyles((theme: Theme) => ({
     cardUpload: {
@@ -115,6 +116,7 @@ export const Form = () => {
     const { id } = useParams<{ id: string }>();
     const [video, setVideo] = useState<Video | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
+    const loading = useContext(LoadingContext);
     const theme = useTheme()
     const isGreaterMd = useMediaQuery(theme.breakpoints.up('md'));
     const castMemberRef = useRef() as MutableRefObject<CastMemberFieldComponent>;

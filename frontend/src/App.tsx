@@ -8,10 +8,12 @@ import Breadcrumbs from './components/Breadcrumbs';
 import theme from './theme';
 import { SnackbarProvider } from './components/SnackbarProvider';
 import Spinner from './components/Spinner';
+import LoadingContext from './components/loading/LoadingContext';
 
 const App: React.FC = () => {
   return (
     <React.Fragment>
+      <LoadingContext.Provider value={true} />
       <MuiThemeProvider theme={theme}>
         <SnackbarProvider>
           <CssBaseline/>
