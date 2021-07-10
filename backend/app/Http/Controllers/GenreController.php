@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\GenreResource;
 use App\Models\Genre;
-use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 
 class GenreController extends BasicCrudController
 {
@@ -17,42 +17,40 @@ class GenreController extends BasicCrudController
 
     public function store(Request $request)
     {
-        $validateData = $this->validate($request, $this->rulesStore());
+        $validatedData = $this->validate($request, $this->rulesStore());
         $self = $this;
-        $obj = \DB::transaction(function () use($request, $validateData, $self) {
-            $obj = $this->model()::create($validateData);
+        $obj = \DB::transaction(function () use ($self, $request, $validatedData) {
+            $obj = $this->model()::create($validatedData);
             $self->handleRelations($obj, $request);
-
             return $obj;
         });
-
         $obj->refresh();
-
         $resource = $this->resource();
+        $obj->load($this->queryBuilder()->getEagerLoads());
         return new $resource($obj);
-
     }
 
     public function update(Request $request, $id)
     {
         $obj = $this->findOrFail($id);
-        $validateData = $this->validate($request, $this->rulesUpdate());
+        $validatedData = $this->validate($request, $this->rulesUpdate());
         $self = $this;
-        \DB::transaction(function () use($request, $validateData, $self, $obj) {
-            $obj->update($validateData);
+        \DB::transaction(function () use ($self, $request, $obj, $validatedData) {
+            $obj->update($validatedData);
             $self->handleRelations($obj, $request);
         });
-
         $resource = $this->resource();
+        $obj->load($this->queryBuilder()->getEagerLoads());
         return new $resource($obj);
-
     }
 
-    public function handleRelations($genre, Request $request) {
+    protected function handleRelations($genre, Request $request)
+    {
         $genre->categories()->sync($request->get('categories_id'));
     }
 
-    protected function model() {
+    protected function model()
+    {
         return Genre::class;
     }
 
@@ -66,14 +64,14 @@ class GenreController extends BasicCrudController
         return $this->rules;
     }
 
-    protected function resourceCollection()
-    {
-        return $this->resource();
-    }
-
     protected function resource()
     {
         return GenreResource::class;
+    }
+
+    protected function resourceCollection()
+    {
+        return $this->resource();
     }
 
     protected function queryBuilder(): Builder

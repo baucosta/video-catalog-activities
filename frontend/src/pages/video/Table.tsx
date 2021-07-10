@@ -11,6 +11,8 @@ import {Link} from "react-router-dom";
 import EditIcon from '@material-ui/icons/Edit';
 import {FilterResetButton} from "../../components/Table/FilterResetButton";
 import useFilter from "../../hooks/useFilter";
+import DeleteDialog from "../../components/DeleteDialog";
+import useDeleteCollection from '../../hooks/useDeleteCollection';
 
 const columnsDefinition: TableColumn[] = [
     {
@@ -96,8 +98,9 @@ const Table = () => {
     const subscribed = useRef(true);
     const [data, setData] = useState<Video[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const {openDeleteDialog, setOpenDeleteDialog, rowsToDelete, setRowsToDelete} = useDeleteCollection();
     const tableRef = useRef() as React.MutableRefObject<MuiDataTableRefComponent>;
-
+//property, funcao - changePage changeRowsPerPage
     const {
         columns,
         filterManager,
@@ -153,35 +156,75 @@ const Table = () => {
         }
     }
 
+    function deleteRows(confirmed: boolean) {
+        if (!confirmed) {
+            setOpenDeleteDialog(false);
+            return;
+        }
+        const ids = rowsToDelete
+            .data
+            .map(value => data[value.index].id)
+            .join(',');
+        videoHttp
+            .deleteCollection({ids})
+            .then(response => {
+                snackbar.enqueueSnackbar(
+                    'Registros excluídos com sucesso',
+                    {variant: 'success'}
+                );
+                if(
+                    rowsToDelete.data.length === filterState.pagination.per_page
+                    && filterState.pagination.page > 1
+                ){
+                    const page = filterState.pagination.page - 2;
+                    filterManager.changePage(page);
+                }else{
+                    getData();
+                }
+            })
+            .catch((error) => {
+                console.error(error);
+                snackbar.enqueueSnackbar(
+                    'Não foi possível excluir os registros',
+                    {variant: 'error',}
+                )
+            })
+    }
+
 
     return (
         <MuiThemeProvider theme={makeActionStyles(columnsDefinition.length - 1)}>
-            <DefaultTable 
-                title="Listagem de categorias"
-                columns={columns} 
+            <DeleteDialog open={openDeleteDialog} handleClose={deleteRows}/>
+            <DefaultTable
+                title=""
+                columns={columns}
                 data={data}
                 loading={loading}
                 debouncedSearchTime={debouncedSearchTime}
                 ref={tableRef}
                 options={{
                     serverSide: true,
-                    responsive: "scrollFullHeight",
+                    responsive: "scrollMaxHeight",
                     searchText: filterState.search as any,
-                    page: filterState.pagination.page-1,
+                    page: filterState.pagination.page - 1,
                     rowsPerPage: filterState.pagination.per_page,
                     rowsPerPageOptions,
                     count: totalRecords,
                     customToolbar: () => (
-                        <FilterResetButton 
+                        <FilterResetButton
                             handleClick={() => filterManager.resetFilter()}
                         />
                     ),
                     onSearchChange: (value) => filterManager.changeSearch(value),
-                    onChangePage: (page) =>  filterManager.changePage(page),
+                    onChangePage: (page) => filterManager.changePage(page),
                     onChangeRowsPerPage: (perPage) => filterManager.changeRowsPerPage(perPage),
                     onColumnSortChange: (changedColumn: string, direction: string) => 
-                        filterManager.columnSortChange(changedColumn, direction)
-                }} 
+                        filterManager.columnSortChange(changedColumn, direction),
+                    // onRowsDelete: (rowsDeleted: any[]) => {
+                    //     setRowsToDelete(rowsDeleted as any);
+                    //     return false;
+                    // },
+                }}
             />
         </MuiThemeProvider>
     );

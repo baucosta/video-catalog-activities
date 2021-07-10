@@ -26,6 +26,12 @@ $routesExcept = [
 ];
 
 Route::resource('categories', 'CategoryController', $routesExcept);
+Route::delete('categories', 'CategoryController@destroyCollection');
 Route::resource('genres', 'GenreController', $routesExcept);
+Route::delete('genres', 'GenreController@destroyCollection');
 Route::resource('cast_members', 'CastMemberController', $routesExcept);
+Route::delete('cast_members', 'CastMemberController@destroyCollection');
 Route::resource('videos', 'VideoController', $routesExcept);
+Route::delete('videos', 'VideoController@destroyCollection');
+
+?>

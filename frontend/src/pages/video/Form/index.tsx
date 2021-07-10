@@ -16,6 +16,7 @@ import CategoryField, { CategoryFieldComponent } from './CategoryField';
 import CastMemberField, { CastMemberFieldComponent } from './CastMemberField';
 import { omit, zipObject } from 'lodash';
 import { InputFileComponent } from '../../../components/InputFile';
+import useSnackbarFormError from '../../../hooks/useSnackbarFormError';
 
 const useStyles = makeStyles((theme: Theme) => ({
     cardUpload: {
@@ -84,7 +85,8 @@ export const Form = () => {
         errors,
         reset,
         watch,
-        triggerValidation
+        triggerValidation,
+        formState
     } = useForm<{
         title,
         description,
@@ -106,6 +108,7 @@ export const Form = () => {
         }
     });
 
+    useSnackbarFormError(formState.submitCount, errors);
     const {enqueueSnackbar} = useSnackbar();
     const classes = useStyles();
     const history = useHistory();
@@ -167,12 +170,12 @@ export const Form = () => {
     async function onSubmit(formData, event) {
         const sendData = omit(
             formData,
-            [...fileFields, 'cast_members', 'genres', 'categories']
+            ['cast_members', 'genres', 'categories']
         );
         sendData['cast_members_id'] = formData['cast_members'].map(cast_member => cast_member.id);
         sendData['categories_id'] = formData['categories'].map(category => category.id);
         sendData['genres_id'] = formData['genres'].map(genre => genre.id);
-
+        
         try {
             const http = !video
                 ? videoHttp.create(sendData)
@@ -193,7 +196,7 @@ export const Form = () => {
                     : history.push('/videos')
             });
         } catch (error) {
-            console.error(error);
+            console.error('erro', error);
             enqueueSnackbar(
                 'Não foi possível salvar o vídeo',
                 {variant: 'error'}

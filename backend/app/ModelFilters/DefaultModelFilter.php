@@ -7,20 +7,23 @@ use Illuminate\Support\Str;
 
 abstract class DefaultModelFilter extends ModelFilter
 {
+
     protected $sortable = [];
 
-    public function setup() {
+    public function setup()
+    {
         $this->blacklistMethod('isSortable');
-        $noSort = $this->input('sort', '') === '';
 
+        $noSort = $this->input('sort', '') === '';
         if ($noSort) {
             $this->orderBy('created_at', 'DESC');
         }
     }
 
-    public function sort($column) {
-        if (method_exists($this, $method = 'sortBy' .  Str::studly($column))){
-            $this->method();
+    public function sort($column)
+    {
+        if(method_exists($this, $method = 'sortBy' . Str::studly($column))){
+            $this->$method();
         }
 
         if ($this->isSortable($column)) {
@@ -29,7 +32,9 @@ abstract class DefaultModelFilter extends ModelFilter
         }
     }
 
-    public function isSortable ($column) {
+    protected function isSortable($column)
+    {
         return in_array($column, $this->sortable);
     }
+
 }

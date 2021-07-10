@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\CategoryCollection;
 use App\Http\Resources\CategoryResource;
 use App\Models\Category;
 
@@ -15,7 +14,8 @@ class CategoryController extends BasicCrudController
         'is_active' => 'boolean'
     ];
 
-    protected function model() {
+    protected function model()
+    {
         return Category::class;
     }
 
