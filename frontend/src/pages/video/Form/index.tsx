@@ -115,7 +115,6 @@ export const Form = () => {
     const history = useHistory();
     const { id } = useParams<{ id: string }>();
     const [video, setVideo] = useState<Video | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
     const loading = useContext(LoadingContext);
     const theme = useTheme()
     const isGreaterMd = useMediaQuery(theme.breakpoints.up('md'));
@@ -144,8 +143,6 @@ export const Form = () => {
       let isSubscribed = true;
 
       (async() => {
-        setLoading(true);
-
         try {
             const {data} = await videoHttp.get(id);
             if (isSubscribed) {
@@ -159,8 +156,6 @@ export const Form = () => {
               'Não foi possível carregar as informações',
               {variant: 'error'}
             );
-        } finally {
-            setLoading(false)
         }
       })();
       return () => {
