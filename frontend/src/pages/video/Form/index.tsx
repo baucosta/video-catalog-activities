@@ -137,32 +137,31 @@ export const Form = () => {
     }, [register]);
 
     useEffect(() => {
-      if (!id) {
-        return ;
-      }
-      let isSubscribed = true;
-
-      (async() => {
-        try {
-            const {data} = await videoHttp.get(id);
-            if (isSubscribed) {
-                setVideo(data.data);
-                reset(data.data);
-            }
-        } catch(error) {
-            console.log(error);
-
-            enqueueSnackbar(
-              'Não foi possível carregar as informações',
-              {variant: 'error'}
-            );
+        if (!id) {
+            return;
         }
-      })();
-      return () => {
-          isSubscribed = false;
-      }
-      
-    }, []);
+        let isSubscribed = true;
+        //iife
+        (async () => {
+            try {
+                const {data} = await videoHttp.get(id);
+                if (isSubscribed) {
+                    setVideo(data.data);
+                    resetForm(data.data);
+                }
+            } catch (error) {
+                console.error(error);
+                enqueueSnackbar(
+                    'Não foi possível carregar as informações',
+                    {variant: 'error',}
+                )
+            }
+        })();
+        return () => {
+            isSubscribed = false;
+        }
+    }, [id, resetForm, enqueueSnackbar]);
+
 
     async function onSubmit(formData, event) {
         const sendData = omit(

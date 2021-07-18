@@ -8,6 +8,7 @@ import GenreList from "../pages/genre/PageList";
 import VideoList from "../pages/video/PageList";
 import VideoCreate from "../pages/video/PageForm";
 import Dashboard from "../pages/Dashboard";
+import UploadPage from "../pages/uploads";
 
 export interface MyRouteProps extends RouteProps {
     label: string;
@@ -106,6 +107,13 @@ const routes: MyRouteProps[] = [
         component: VideoCreate,
         exact: true
     },
+    {
+        name: 'uploads',
+        label: 'Uploads',
+        path: '/uploads',
+        component: UploadPage,
+        exact: true,
+    }
    
 ];
 
