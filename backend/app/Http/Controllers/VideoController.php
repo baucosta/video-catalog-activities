@@ -8,6 +8,7 @@ use App\Rules\GenresHasCategoriesRule;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
+
 class VideoController extends BasicCrudController
 {
 

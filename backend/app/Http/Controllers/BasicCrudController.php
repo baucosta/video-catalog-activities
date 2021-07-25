@@ -7,7 +7,6 @@ use EloquentFilter\Filterable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use Illuminate\Support\Str;
 
 abstract class BasicCrudController extends Controller
 {
@@ -80,6 +79,21 @@ abstract class BasicCrudController extends Controller
         $obj->update($validatedData);
         $resource = $this->resource();
         return new $resource($obj);
+    }
+
+    protected function rulesPatch()
+    {
+        return array_map(function ($rules) {
+            if (is_array($rules)) {
+                $exists = in_array("required", $rules);
+                if ($exists) {
+                    array_unshift($rules, "sometimes");
+                }
+            } else {
+                return str_replace("required", "sometimes|required", $rules);
+            }
+            return $rules;
+        }, $this->rulesUpdate());
     }
 
     public function destroy($id)

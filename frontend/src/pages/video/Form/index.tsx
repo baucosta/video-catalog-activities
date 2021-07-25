@@ -1,23 +1,27 @@
-// @flow 
-import { Card, CardContent, Checkbox, FormControlLabel, Grid, TextField, Typography, useMediaQuery, Theme, useTheme, makeStyles } from '@material-ui/core';
-import React, { createRef, MutableRefObject, useContext, useEffect, useRef, useState } from "react";
-import { useForm } from "react-hook-form";
-import *  as yup from '../../../utils/vendor/yup';
-import { useHistory, useParams } from 'react-router';
-import { useSnackbar } from 'notistack';
-import { Video, VideoFileFieldsMap } from '../../../utils/models';
-import SubmitActions from '../../../components/SubmitActions';
-import { DefaultForm } from '../../../components/DefaultForm';
-import videoHttp from '../../../utils/http/video-http';
-import RatingField from './RatingField';
-import UploadField from './UploadField';
-import GenreField, { GenreFieldComponent } from './GenreField';
-import CategoryField, { CategoryFieldComponent } from './CategoryField';
-import CastMemberField, { CastMemberFieldComponent } from './CastMemberField';
-import { omit, zipObject } from 'lodash';
-import { InputFileComponent } from '../../../components/InputFile';
-import useSnackbarFormError from '../../../hooks/useSnackbarFormError';
-import LoadingContext from '../../../components/loading/LoadingContext';
+import * as React from 'react';
+import { Card, CardContent, Checkbox, FormControlLabel, Grid, makeStyles, TextField, Theme, Typography, useMediaQuery, useTheme } from "@material-ui/core";
+import {useForm} from "react-hook-form";
+import videoHttp from "../../../utils/http/video-http";
+import * as yup from '../../../utils/vendor/yup';
+import {createRef, MutableRefObject, useCallback, useContext, useEffect, useRef, useState} from "react";
+import {useParams, useHistory} from "react-router";
+import {useSnackbar} from "notistack";
+import {Video, VideoFileFieldsMap} from "../../../utils/models";
+import SubmitActions from "../../../components/SubmitActions";
+import {DefaultForm} from "../../../components/DefaultForm";
+import RatingField from "./RatingField";
+import UploadField from "./UploadField";
+import GenreField, {GenreFieldComponent} from "./GenreField";
+import CategoryField, {CategoryFieldComponent} from "./CategoryField";
+import CastMemberField, {CastMemberFieldComponent} from "./CastMemberField";
+import {omit, zipObject} from 'lodash';
+import {InputFileComponent} from "../../../components/InputFile";
+import useSnackbarFormError from "../../../hooks/useSnackbarFormError";
+import LoadingContext from "../../../components/loading/LoadingContext";
+import SnackbarUpload from "../../../components/SnackbarUpload";
+import {useDispatch} from "react-redux";
+import {FileInfo} from "../../../store/upload/types";
+import {Creators} from '../../../store/upload';
 
 const useStyles = makeStyles((theme: Theme) => ({
     cardUpload: {
@@ -58,7 +62,7 @@ const validationSchema = yup.object().shape({
         .required()
         .test({
             message: 'Cada gênero escolhido precisa ter pelo menos uma categoria selecionada',
-            test(value) {
+            test(value) { //array genres [{name, categories: []}]
                 return value.every(
                     v => v.categories.filter(
                         cat => this.parent.categories.map(c => c.id).includes(cat.id)
@@ -73,7 +77,6 @@ const validationSchema = yup.object().shape({
         .label('Classificação')
         .required()
 });
-
 
 const fileFields = Object.keys(VideoFileFieldsMap);
 
@@ -110,13 +113,13 @@ export const Form = () => {
     });
 
     useSnackbarFormError(formState.submitCount, errors);
-    const {enqueueSnackbar} = useSnackbar();
     const classes = useStyles();
+    const {enqueueSnackbar} = useSnackbar();
     const history = useHistory();
     const { id } = useParams<{ id: string }>();
     const [video, setVideo] = useState<Video | null>(null);
     const loading = useContext(LoadingContext);
-    const theme = useTheme()
+    const theme = useTheme();
     const isGreaterMd = useMediaQuery(theme.breakpoints.up('md'));
     const castMemberRef = useRef() as MutableRefObject<CastMemberFieldComponent>;
     const genreRef = useRef() as MutableRefObject<GenreFieldComponent>;
@@ -124,6 +127,18 @@ export const Form = () => {
     const uploadsRef = useRef(
         zipObject(fileFields, fileFields.map(() => createRef()))
     ) as MutableRefObject<{ [key: string]: MutableRefObject<InputFileComponent> }>;
+
+    const dispatch = useDispatch();
+
+    const resetForm = useCallback((data) => {
+        Object.keys(uploadsRef.current).forEach(
+            field => uploadsRef.current[field].current.clear()
+        );
+        castMemberRef.current.clear();
+        genreRef.current.clear();
+        categoryRef.current.clear();
+        reset(data);//removido
+    }, [castMemberRef, categoryRef, genreRef, reset, uploadsRef]);
 
     useEffect(() => {
         [
@@ -162,25 +177,25 @@ export const Form = () => {
         }
     }, [id, resetForm, enqueueSnackbar]);
 
-
     async function onSubmit(formData, event) {
         const sendData = omit(
             formData,
-            ['cast_members', 'genres', 'categories']
+            [...fileFields, 'cast_members', 'genres', 'categories']
         );
         sendData['cast_members_id'] = formData['cast_members'].map(cast_member => cast_member.id);
         sendData['categories_id'] = formData['categories'].map(category => category.id);
         sendData['genres_id'] = formData['genres'].map(genre => genre.id);
-        
+
         try {
             const http = !video
                 ? videoHttp.create(sendData)
-                : videoHttp.update(video.id, {...sendData, _method: 'PUT'}, {http: {usePost: true}});
+                : videoHttp.update(video.id, sendData);
             const {data} = await http;
             enqueueSnackbar(
                 'Vídeo salvo com sucesso',
                 {variant: 'success'}
             );
+            uploadFiles(data.data);
             id && resetForm(video);
             setTimeout(() => {
                 event
@@ -192,7 +207,7 @@ export const Form = () => {
                     : history.push('/videos')
             });
         } catch (error) {
-            console.error('erro', error);
+            console.error(error);
             enqueueSnackbar(
                 'Não foi possível salvar o vídeo',
                 {variant: 'error'}
@@ -200,88 +215,102 @@ export const Form = () => {
         }
     }
 
-    function resetForm(data) {
-        Object.keys(uploadsRef.current).forEach(
-            field => uploadsRef.current[field].current.clear()
-        );
-        castMemberRef.current.clear();
-        genreRef.current.clear();
-        categoryRef.current.clear();
-        reset(data);//removido
+    function uploadFiles(video) {
+        const files: FileInfo[] = fileFields
+            .filter(fileField => getValues()[fileField])
+            .map(fileField => ({fileField, file: getValues()[fileField] as File}));
+
+        if (!files.length) {
+            return;
+        }
+
+        dispatch(Creators.addUpload({video, files}));
+
+        enqueueSnackbar('', {
+            key: 'snackbar-upload',
+            persist: true,
+            anchorOrigin: {
+                vertical: 'bottom',
+                horizontal: 'right'
+            },
+            content: (key, message) => {
+                const id = key as any;
+                return <SnackbarUpload id={id}/>
+            }
+        });
     }
 
-
     return (
-        <DefaultForm GridItemProps={{xs: 12}} onSubmit={handleSubmit(onSubmit)}>
+        <DefaultForm
+            GridItemProps={{xs: 12}}
+            onSubmit={handleSubmit(onSubmit)}
+        >
             <Grid container spacing={5}>
                 <Grid item xs={12} md={6}>
                     <TextField
                         name="title"
-                        label="Títlo"
+                        label="Título"
+                        variant={'outlined'}
                         fullWidth
-                        variant={"outlined"} 
                         inputRef={register}
-                        InputLabelProps={{shrink: true}}
                         disabled={loading}
+                        InputLabelProps={{shrink: true}}
                         error={errors.title !== undefined}
-                        helperText={errors.title && errors.title.message} 
+                        helperText={errors.title && errors.title.message}
                     />
-
                     <TextField
                         name="description"
-                        label="Sinopse" 
+                        label="Sinopse"
                         multiline
                         rows="4"
+                        margin="normal"
+                        variant="outlined"
                         fullWidth
-                        variant={"outlined"}
-                        margin={"normal"} 
                         inputRef={register}
-                        InputLabelProps={{shrink: true}} 
                         disabled={loading}
+                        InputLabelProps={{shrink: true}}
                         error={errors.description !== undefined}
-                        helperText={errors.description && errors.description.message} 
+                        helperText={errors.description && errors.description.message}
                     />
-
                     <Grid container spacing={1}>
                         <Grid item xs={6}>
                             <TextField
                                 name="year_launched"
-                                label="Ano de lançamento" 
+                                label="Ano de lançamento"
                                 type="number"
-                                margin={"normal"} 
-                                variant={"outlined"}
+                                margin="normal"
+                                variant="outlined"
                                 fullWidth
                                 inputRef={register}
                                 disabled={loading}
-                                InputLabelProps={{shrink: true}} 
+                                InputLabelProps={{shrink: true}}
                                 error={errors.year_launched !== undefined}
-                                helperText={errors.year_launched && errors.year_launched.message} 
+                                helperText={errors.year_launched && errors.year_launched.message}
                             />
                         </Grid>
                         <Grid item xs={6}>
                             <TextField
                                 name="duration"
-                                label="Duração" 
+                                label="Duração"
                                 type="number"
-                                margin={"normal"} 
-                                variant={"outlined"}
+                                margin="normal"
+                                variant="outlined"
                                 fullWidth
                                 inputRef={register}
                                 disabled={loading}
-                                InputLabelProps={{shrink: true}} 
+                                InputLabelProps={{shrink: true}}
                                 error={errors.duration !== undefined}
-                                helperText={errors.duration && errors.duration.message} 
+                                helperText={errors.duration && errors.duration.message}
                             />
                         </Grid>
                     </Grid>
                     <CastMemberField
                         ref={castMemberRef}
                         castMembers={watch('cast_members')}
-                        setCastMembers={(value) => setValue('cast_members', value)}
+                        setCastMembers={(value) => setValue('cast_members', value, true)}
                         error={errors.cast_members}
                         disabled={loading}
                     />
-                    
                     <Grid container spacing={2}>
                         <Grid item xs={12} md={6}>
                             <GenreField
@@ -289,7 +318,7 @@ export const Form = () => {
                                 genres={watch('genres')}
                                 setGenres={(value) => setValue('genres', value)}
                                 categories={watch('categories')}
-                                setCategories={(value) => setValue('categories', value)}
+                                setCategories={(value) => setValue('categories', value, true)}
                                 error={errors.genres}
                                 disabled={loading}
                             />
@@ -298,36 +327,35 @@ export const Form = () => {
                             <CategoryField
                                 ref={categoryRef}
                                 categories={watch('categories')}
-                                setCategories={(value) => setValue('categories', value)}
+                                setCategories={(value) => setValue('categories', value, true)}
                                 genres={watch('genres')}
                                 error={errors.categories}
                                 disabled={loading}
                             />
                         </Grid>
                     </Grid>
-                </Grid>
 
+                </Grid>
                 <Grid item xs={12} md={6}>
                     <RatingField
                         value={watch('rating')}
+                        setValue={(value) => setValue('rating', value, true)}
                         error={errors.rating}
                         disabled={loading}
-                        setValue={(value) => setValue('rating', value)}
                         FormControlProps={{
                             margin: isGreaterMd ? 'none' : 'normal'
                         }}
                     />
-                    <br />
                     <Card className={classes.cardUpload}>
                         <CardContent>
                             <Typography color="primary" variant="h6">
                                 Imagens
                             </Typography>
                             <UploadField
-                                 ref={uploadsRef.current['thumb_file']}
-                                 accept={'image/*'}
-                                 label={'Thumb'}
-                                 setValue={(value) => setValue('thumb_file', value)}
+                                ref={uploadsRef.current['thumb_file']}
+                                accept={'image/*'}
+                                label={'Thumb'}
+                                setValue={(value) => setValue('thumb_file', value)}
                             />
                             <UploadField
                                 ref={uploadsRef.current['banner_file']}
@@ -337,7 +365,6 @@ export const Form = () => {
                             />
                         </CardContent>
                     </Card>
-
                     <Card className={classes.cardUpload}>
                         <CardContent>
                             <Typography color="primary" variant="h6">
@@ -360,8 +387,6 @@ export const Form = () => {
                             />
                         </CardContent>
                     </Card>
-                    
-
                     <Card className={classes.cardOpened}>
                         <CardContent className={classes.cardContentOpened}>
                             <FormControlLabel
@@ -387,16 +412,14 @@ export const Form = () => {
                     </Card>
                 </Grid>
             </Grid>
-
-            <SubmitActions 
-                disabledButtons={loading} 
-                handleSave={() => 
+            <SubmitActions
+                disabledButtons={loading}
+                handleSave={() =>
                     triggerValidation().then(isValid => {
-                        isValid && onSubmit(getValues(), null);
+                        isValid && onSubmit(getValues(), null)
                     })
                 }
-            >
-            </SubmitActions>
+            />
         </DefaultForm>
     );
 };
