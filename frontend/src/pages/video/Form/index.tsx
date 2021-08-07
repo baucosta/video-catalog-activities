@@ -62,7 +62,7 @@ const validationSchema = yup.object().shape({
         .required()
         .test({
             message: 'Cada gênero escolhido precisa ter pelo menos uma categoria selecionada',
-            test(value) { //array genres [{name, categories: []}]
+            test(value) {
                 return value.every(
                     v => v.categories.filter(
                         cat => this.parent.categories.map(c => c.id).includes(cat.id)
@@ -137,7 +137,7 @@ export const Form = () => {
         castMemberRef.current.clear();
         genreRef.current.clear();
         categoryRef.current.clear();
-        reset(data);//removido
+        reset(data);
     }, [castMemberRef, categoryRef, genreRef, reset, uploadsRef]);
 
     useEffect(() => {
@@ -156,7 +156,7 @@ export const Form = () => {
             return;
         }
         let isSubscribed = true;
-        //iife
+        
         (async () => {
             try {
                 const {data} = await videoHttp.get(id);

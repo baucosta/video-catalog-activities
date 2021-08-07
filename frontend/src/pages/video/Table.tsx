@@ -11,9 +11,9 @@ import {Link} from "react-router-dom";
 import EditIcon from '@material-ui/icons/Edit';
 import {FilterResetButton} from "../../components/Table/FilterResetButton";
 import useFilter from "../../hooks/useFilter";
+import useDeleteCollection from "../../hooks/useDeleteCollection";
 import DeleteDialog from "../../components/DeleteDialog";
-import useDeleteCollection from '../../hooks/useDeleteCollection';
-import LoadingContext from '../../components/loading/LoadingContext';
+import LoadingContext from "../../components/loading/LoadingContext";
 
 const columnsDefinition: TableColumn[] = [
     {
@@ -105,6 +105,7 @@ const Table = () => {
     const {
         columns,
         filterManager,
+        cleanSearchText,
         filterState,
         debouncedFilterState,
         totalRecords,
@@ -124,7 +125,7 @@ const Table = () => {
             subscribed.current = false;
         }
     }, [
-        filterManager.cleanSearchText(debouncedFilterState.search),
+        cleanSearchText(debouncedFilterState.search),
         debouncedFilterState.pagination.page,
         debouncedFilterState.pagination.per_page,
         debouncedFilterState.order
@@ -134,7 +135,7 @@ const Table = () => {
         try {
             const {data} = await videoHttp.list<ListResponse<Video>>({
                 queryParams: {
-                    search: filterManager.cleanSearchText(filterState.search),
+                    search: cleanSearchText(debouncedFilterState.search),
                     page: debouncedFilterState.pagination.page,
                     per_page: debouncedFilterState.pagination.per_page,
                     sort: debouncedFilterState.order.sort,
@@ -144,6 +145,9 @@ const Table = () => {
             if (subscribed.current) {
                 setData(data.data);
                 setTotalRecords(data.meta.total);
+                if(openDeleteDialog){
+                    setOpenDeleteDialog(false);
+                }
             }
         } catch (error) {
             console.error(error);
@@ -219,8 +223,8 @@ const Table = () => {
                     onSearchChange: (value) => filterManager.changeSearch(value),
                     onChangePage: (page) => filterManager.changePage(page),
                     onChangeRowsPerPage: (perPage) => filterManager.changeRowsPerPage(perPage),
-                    onColumnSortChange: (changedColumn: string, direction: string) => 
-                        filterManager.columnSortChange(changedColumn, direction),
+                    onColumnSortChange: (changedColumn: string, direction: string) =>
+                        filterManager.changeColumnSort(changedColumn, direction),
                     // onRowsDelete: (rowsDeleted: any[]) => {
                     //     setRowsToDelete(rowsDeleted as any);
                     //     return false;
