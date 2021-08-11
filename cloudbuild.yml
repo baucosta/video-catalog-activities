@@ -1,51 +1,71 @@
 steps:
-    - id: "Generating service-account-storage.json"
-      name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-      entrypoint: gcloud
-      args:
-        - kms
-        - decrypt
-        - --ciphertext-file=./storage/credentials/google/service-account-storage.json.enc
-        - --plaintext-file=./storage/credentials/google/service-account-storage.json
-        - --location=global
-        - --keyring=test-lesson
-        - --key=service-account
 
-    - id: "Performing  docker-compose"
-      name: 'docker/compose'
-      args: ["-f", "docker-compose.prod.yml", "up", "-d"]
-      env:
-        - GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID
-        - GOOGLE_CLOUD_KEY_FILE=service-account-storage.json
-        - GOOGLE_CLOUD_STORAGE_BUCKET=micro-video-codeflix
-        - GOOGLE_CLOUD_STORAGE_API_URI=https://storage.cloud.google.com/code-education-activities
-        - TESTING_PROD=true
+    -   id: 'Gerando service-account-storage.json'
+        name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+        entrypoint: gcloud
+        args:
+            - kms
+            - decrypt
+            - --ciphertext-file=./backend/storage/credentials/google/service-account-storage.json.enc
+            - --plaintext-file=./backend/storage/credentials/google/service-account-storage.json
+            - --location=global
+            - --keyring=testing
+            - --key=service-account
 
+    -   id: "Rodando docker-compose"
+        name: 'docker/compose'
+        args: ['-f','docker-compose.prod.yaml','up','-d']
+        env:
+            - GOOGLE_CLOUD_PROJECT_ID=$PROJECT_ID
+            - GOOGLE_CLOUD_KEY_FILE=service-account-storage.json
+            - GOOGLE_CLOUD_STORAGE_BUCKET=code-micro-videos1
+            - GOOGLE_CLOUD_STORAGE_API_URI=https://storage.cloud.google.com/code-micro-videos1
+            - TESTING_PROD=true
 
-    - id: "Chown in /var/www"
-      name: 'docker'
-      args: ['exec','-u','root','-t','micro-videos-app','chown','-R','www-data:www-data','/var/www']
+    -   id: "Chown in /var/www"
+        name: 'docker'
+        args: ['exec','-u','root','-t','app','chown','-R','www-data:www-data','/var/www']
 
-    - id: "Performing composer"
-      name: 'docker'
-      args: ["exec", "-t", "micro-videos-app", "composer", "install"]
+    -   id: "Rodando composer"
+        name: 'docker'
+        args: ['exec','-t','app','composer','install', '-d','/var/www/backend']
 
-    - id: "Copying .env"
-      name: 'docker'
-      args: ["exec", "-t", "micro-videos-app", "cp", ".env.example", ".env"]
+    -   id: "Copiando backend .env"
+        name: 'docker'
+        args: ['exec','-t','app','cp','/var/www/backend/.env.example','/var/www/backend/.env']
 
-    - id: "Copying .env.testing"
-      name: 'docker'
-      args: ["exec", "-t", "micro-videos-app", "cp", ".env.testing.example", ".env.testing"]
+    -   id: "Copiando backend .env.testing"
+        name: 'docker'
+        args: ['exec','-t','app','cp','/var/www/backend/.env.testing.example','/var/www/backend/.env.testing']
 
-    - id: "Performing key:generate"
-      name: 'docker'
-      args: ["exec", "-t", "micro-videos-app", "php", "/var/www/artisan", "key:generate"]
+    -   id: "Rodando key:generate"
+        name: 'docker'
+        args: ['exec','-t','app','php','/var/www/backend/artisan','key:generate']
 
-    - id: "Performing migrations"
-      name: 'docker'
-      args: ["exec", "-t", "micro-videos-app", "php", "/var/www/artisan", "migrate"]
+    -   id: "Rodando migrations"
+        name: 'docker'
+        args: ['exec','-t','app','php','/var/www/backend/artisan','migrate']
 
-    - id: "Performing PHPUnit"
-      name: 'docker'
-      args: ["exec", "-t", "micro-videos-app", "php", "/var/www/vendor/bin/phpunit", "-c","/var/www/phpunit.xml"]
+    -   id: "Rodando Phpunit"
+        name: 'docker'
+        args: ['exec','-t','app','php','/var/www/backend/vendor/bin/phpunit','-c','/var/www/backend/phpunit.xml']
+    
+    -   id: "Copiando frontend .env"
+        name: 'docker'
+        args: ['exec','-t','app','cp','/var/www/frontend/.env.example','/var/www/frontend/.env']
+
+    -   id: 'Install front-end'
+        name: 'docker'
+        args: ['exec','-t','app','npm','install', '--prefix', '/var/www/frontend']
+    
+    -   id: 'Permission on scripts/build.sh'
+        name: 'docker'
+        args: ['exec','-t','app','chmod','+x','/var/www/frontend/scripts/build.sh']
+
+    -   id: 'Build front-end'
+        name: 'docker'
+        args: ['exec','-t','app','npm','run', 'build-laravel','--prefix', '/var/www/frontend']
+
+    -   id: 'Test Laravel and React integration'
+        name: 'docker'
+        args: ['exec','-w','/var/www/backend','-t','app','php','artisan','dusk', '--env=testing']
